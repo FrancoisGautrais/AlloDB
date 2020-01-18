@@ -1,19 +1,26 @@
+import json
 import sys
 import time
 import traceback
 from functools import cmp_to_key
+
+import requests
+
 from alloexpr import Expr
 from allolexer import Lexer
 from io import StringIO
 
-class AlloDbHeader:
+class DbHeader:
 
-    def __init__(self, line):
-        self.line=line
-        if line[-1]=="\n": line=line[:-1]
-        self.heads=line.split(";")
-        while len(self.heads)>0 and self.heads[-1]=="":
-            self.heads=self.heads[:-1]
+    def __init__(self, line=None, array=None):
+        if line:
+            self.line=line
+            if line[-1]=="\n": line=line[:-1]
+            self.heads=line.split(";")
+            while len(self.heads)>0 and self.heads[-1]=="":
+                self.heads=self.heads[:-1]
+        elif array:
+            self.heads=array
         self.index={}
         for i in range(len(self.heads)):
             self.index[self.heads[i]]=i
@@ -40,25 +47,27 @@ class AlloDbHeader:
         return out
     def __repr__(self): return self.__str__()
 
-class AlloDbRow:
-    def __init__(self, head, line):
-        self.line=line
-        if line[-1]=="\n": line=line[:-1]
-        lex=Lexer(StringIO(line))
-        self.data=[]
-        tok=Lexer.TOK_PVIRGULE
-        while tok==Lexer.TOK_PVIRGULE:
-            tok=lex.next()
-            if tok in [Lexer.TOK_INT, Lexer.TOK_FLOAT, Lexer.TOK_STRING]:
-                self.data.append(lex.data)
+class DbRow:
+    def __init__(self, head, line=None, array=None):
+        if line:
+            self.line=line
+            if line[-1]=="\n": line=line[:-1]
+            lex=Lexer(StringIO(line))
+            self.data=[]
+            tok=Lexer.TOK_PVIRGULE
+            while tok==Lexer.TOK_PVIRGULE:
                 tok=lex.next()
-            elif tok==Lexer.TOK_PVIRGULE:
-                self.data.append(None)
-            elif tok==Lexer.TOK_END:
-                break
-            else:
-                raise Exception("Type "+Lexer.tokstr(tok)+" not expected (str, int, float)")
-
+                if tok in [Lexer.TOK_INT, Lexer.TOK_FLOAT, Lexer.TOK_STRING]:
+                    self.data.append(lex.data)
+                    tok=lex.next()
+                elif tok==Lexer.TOK_PVIRGULE:
+                    self.data.append(None)
+                elif tok==Lexer.TOK_END:
+                    break
+                else:
+                    raise Exception("Type "+Lexer.tokstr(tok)+" not expected (str, int, float)")
+        elif array:
+            self.data=array
 
         self.header=head
         if len(self.header.heads)!=len(self.data):
@@ -98,6 +107,25 @@ class AlloDbRow:
         elif b: return -1*coef
         return 0
 
+    def _html_to_json(self, content):
+
+
+    def add_from_json(self, js):
+        arr=[]
+
+
+    def add_from_html(self, url=None, file=None, content=""):
+        if url:
+            req=requests.get(url)
+            if req.status_code!=200: return None
+            content=req.text
+        elif file:
+            with open(file) as f:
+                content=f.read()
+        js=self._html_to_json(content)
+        return self.add_from_json(js)
+
+
     def __str__(self):
         out=""
         for x in self.data:
@@ -107,20 +135,19 @@ class AlloDbRow:
         return out
     def __repr__(self): return self.__str__()
 
-class AlloDB:
+class DB:
 
     def __init__(self, file=None, col=[], order=[]):
         self.header=None
         self.data=[]
-        self.columns=col
         self.order=order
         self.time=time.time()
         if file:
             with open(file, "r") as f:
-                self.header=AlloDbHeader(f.readline())
+                self.header=DbHeader(line=f.readline())
                 line=f.readline()
                 while line!="":
-                    self.data.append(AlloDbRow(self.header,line))
+                    self.data.append(DbRow(self.header,line=line))
                     line=f.readline()
                 self.time = time.time() - self.time
                 #print("line -> ", line)
@@ -138,7 +165,7 @@ class AlloDB:
 
     def match(self, expr):
         if isinstance(expr, str): expr=Expr.parsestring(expr)
-        out=AlloDB(col=expr.select, order=expr.order)
+        out=DB(col=expr.select, order=expr.order)
         out.header=self.header
         for row in self.data:
             try:
@@ -148,17 +175,52 @@ class AlloDB:
                 pass
         if len(expr.order)>0:
             key, sens = expr.order[0]
-            out.data=sorted(out.data, key=cmp_to_key(lambda a,b: AlloDbRow.sortkey(a,b, key, 1 if sens else -1) ))
+            out.data=sorted(out.data, key=cmp_to_key(lambda a,b: DbRow.sortkey(a,b, key, 1 if sens else -1) ))
         out.time = time.time() - out.time
 
         return out
 
+    @staticmethod
+    def fromjson(js, cols):
+        if isinstance(js, str):
+            with open(js, "r") as f:
+                js=json.loads(f.read())
+        db=DB()
+        db.time=js["time"]
+        db.header=DbHeader(array=js["columns"])
+        db.order=js["order"]
+        for row in js["data"]:
+            db.data.append(DbRow(db.header, array=row))
+
+        return db
+
+
+    def tojson(self):
+        rows=[]
+        for x in self.data:
+            rows.append(x.data)
+        return {
+            "time": self.time,
+            "columns" : self.header.heads,
+            "results": len(self.data),
+            "order" : self.order,
+            "data" :  rows
+        }
 
 select=Expr.parsestring('select id, name, note where "will smith" in actor order by note desc')
 t=time.time()
-adb = AlloDB("result.csv")
+#adb = AlloDB("result.csv")
+ALLO_HEADER=[
+    "id",
+    "name",
+    "image/*/url",
+
+]
+adb = DB.fromjson("db.json")
 t=time.time()-t
 print(t, "s \n")
+#with open("db.json", "w") as f:
+#    f.write(json.dumps(adb.tojson()))
 #select='note>=4 and nnote in range(100, 2000) and "Thriller" in genre'
 
 res=adb.match(select)
