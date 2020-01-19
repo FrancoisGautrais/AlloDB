@@ -24,10 +24,10 @@ class Expr:
 
 
     @staticmethod
-    def parsestring(string):
+    def parsestring(string, data):
         io = StringIO(string)
         l=Lexer(io)
-        parser=Parser(l)
+        parser=Parser(l, data)
         return parser.parse().optimize()
 
 
@@ -73,9 +73,10 @@ class ArrayExpr(ConstExpr):
 
 
 class VarExpr(UnaryExpr):
-    def __init__(self, data):
+    def __init__(self, data, user):
         if not isinstance(data, str): raise Exception("Var must be ident")
         UnaryExpr.__init__(self, data)
+        self.userdata=user
 
     def __str__(self): return self.first
 
@@ -147,14 +148,20 @@ class  BandExpr(BinaryExpr):
     def val(self, dico): return self.first.val(dico) and self.second.val(dico)
 
 
-class  InExpr(BinaryExpr):
+class InExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "in")
     def val(self, dico):
         f=self.first.val(dico)
         s=self.second.val(dico)
         if f==None or s==None: raise TypeError("")
         if isinstance(s, str): return f.lower() in s.lower()
-        if isinstance(s, list): return f in s
+        if isinstance(s, list):
+            if f in s: return s
+            if isinstance(f, str):
+                f=f.lower()
+                for x in s:
+                    if isinstance(x, str) and x.lower() in s: return True
+                return False
         if isinstance(s, (Range)): return s.is_in(f)
         raise Exception("Type error in IN")
 
@@ -190,7 +197,6 @@ class RootExpr(Expr):
         self.first=expr
         self.order=order
 
-
     def __str__(self):
         out=""
         if self.select:
@@ -215,8 +221,9 @@ class RootExpr(Expr):
         return self
 
 class Parser:
-    def __init__(self, lexer):
+    def __init__(self, lexer, data):
         self.lex=lexer
+        self.data=data
         self.tok = Lexer.TOK_UNKNOWN
 
     def _main(self):
@@ -271,9 +278,6 @@ class Parser:
 
         return RootExpr(select, expr, order)
 
-
-
-
     def _expr(self): return self._exprOr()
 
     def _exprOr(self):
@@ -305,9 +309,6 @@ class Parser:
         self._next()
         second = self._exprIn()
         return InExpr(first, second)
-
-
-
 
     def _exprBOr(self):
         first = self._exprBAnd()
@@ -413,7 +414,7 @@ class Parser:
                             return RangeExpr(first, second)
 
                 raise Exception("Range need 2 parameters")
-            return VarExpr(x)
+            return VarExpr(x, self.data)
         raise Exception("Attendu: int, float ou '(' => " + Lexer.tokstr(self.tok))
 
     def _array(self):

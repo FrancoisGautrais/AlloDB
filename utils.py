@@ -1,5 +1,38 @@
 import json
 import os
+import ast
+
+import requests
+
+
+def filter_nat(line):
+    n=line.find('nationality"> ')
+    if n>0:
+        line=line[n+14:]
+        nn=line.find("<")
+        return line[:nn]
+    return None
+
+def filter_id(line):
+    n=line.find('"movie_id":"')
+    if n>0:
+        line=line[n+12:]
+        n=line.find('"')
+        return int(line[:n])
+    return None
+
+def filter_date(line):
+    n=line.find('/annee-')
+    if n>0:
+        line=line[n+7:]
+        nn=line.find("/")
+        return int(line[:nn])
+    n=line.find("production_year=")
+    if n>0:
+        line=line[n+16:]
+        return int(line[:line.find('"')])
+    return None
+
 def jsonfromfile(f):
     with open(f, "r") as f:
         return json.loads(f.read())
@@ -13,8 +46,8 @@ def obj_to_arr(js, columns):
         if len(x) == 1: x=(x[0], None, None)
         if len(x) == 2: x=(x[0], x[1], None)
         v=jsval(js, *x[:3])
-        print(v)
         arr.append(v)
+    return arr
 
 
 def _jsvalarray(js, path, fct, default):
@@ -60,15 +93,40 @@ def castarr(x):
 def floatvirg(x):
     return float(x.replace(",", "."))
 
+
+
+def extract(htmlcont, columns):
+    content = htmlcont
+    n = content.find('<script type="application/ld+json">')
+    js = {}
+    if n >= 0:
+        content = content[n + 36:].replace("\r", "").replace("\n", "").replace("\t", "")
+        n = content.find('</script>')
+        if n >= 0:
+            content = content[:n]
+            js = json.loads(content)
+
+    js["pays"] = []
+    js["annee"] = None
+    for line in htmlcont.split("\n"):
+        x = filter_nat(line)
+        if x: js["pays"].append(x)
+        x = filter_date(line)
+        if x: js["annee"] = x
+        x = filter_id(line)
+        if x: js["id"] = x
+    x=obj_to_arr(js, columns)
+    return x
+
 def test(start, end):
     for i in range(start, end):
-        path="/home/fanch/allocine/"+str(i)+".json"
+        path="/home/fanch/allocine/allocine/"+str(i)+".html"
         if os.path.isfile(path):
             obj_to_arr(jsonfromfile(path),
                        [
-                            ("id", None, None, "id"),
-                            ("name", None, None, "name"),
-                            ("image/url", None, None, "image"),
+                           ("id", None, None, "id"),
+                           ("name", None, None, "name"),
+                           ("image/url", None, None, "image"),
                            ("pays/*", castarr, None, "nationality"),
                            ("annee",  None, None, "year"),
                            ("genre/*", castarr, None, "genre"),
@@ -80,7 +138,31 @@ def test(start, end):
                            ("aggregateRating/ratingValue", floatvirg, None, "note"),
                            ("aggregateRating/ratingCount", int, None, "nnote"),
                            ("aggregateRating/reviewCount", int, None, "nreview")
-
-
                        ])
-test(2,20)
+        else:
+            raise Exception(path+" does not exists")
+
+
+#test(2,20)
+i=0
+if False:
+    for file in os.listdir("/home/fanch/allocine/allocine"):
+        cont = ""
+        with open("/home/fanch/allocine/allocine/"+file) as f:
+            i+=1
+            x=f.read()
+            print("/home/fanch/allocine/allocine/"+file, i)
+            if x and x[0]=='"':
+                cont = ast.literal_eval(x)
+            else: cont=x
+
+
+        if x and x[0] == '"':
+            with open("/home/fanch/allocine/allocine/"+file, "w") as f:
+                try:
+                    f.write(cont)
+                except UnicodeEncodeError:
+                    x=requests.get("http://www.allocine.fr/film/fichefilm_gen_cfilm="+file[:file.find(".")]+".html")
+                    f.write(x.text)
+                    print("----->", "/home/fanch/allocine/allocine/"+file)
+

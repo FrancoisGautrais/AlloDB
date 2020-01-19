@@ -1,4 +1,5 @@
 import json
+import os
 import sys
 import time
 import traceback
@@ -6,12 +7,198 @@ from functools import cmp_to_key
 
 import requests
 
+import utils
 from alloexpr import Expr
 from allolexer import Lexer
 from io import StringIO
 
-class DbHeader:
+payslist={
+    'afghan' : "af",
+    'albanais' : "al",
+    'algérien' : "dz",
+    'allemand' : "de",
+    'américain' : "us",
+    'andorran' : "ad",
+    'angolais' : "ao",
+    'antiguais' : "ag",
+    'argentin' : "ar",
+    'arménien' : "am",
+    'australien' : "au",
+    'autrichien' : "at",
+    'azerbaïdjanais' : "az",
+    'bahaméen' : "bs",
+    'bahreini' : "bh",
+    'barbadien' : "bb",
+    'belge' : "be",
+    'belizien' : "bz",
+    'bengali' : "",
+    'Bermudien' : "bm",
+    'bhoutanais' : "bt",
+    'birman' : "",
+    'bissau-guinéen' : "",
+    'biélorusse' : "",
+    'bolivien' : "bo",
+    'bosniaque' : "ba",
+    'botswanais' : "bw",
+    'britannique' : "uk",
+    'brésilien' : "br",
+    'bulgare' : "bg",
+    'burkinabé' : "bf",
+    'burundais' : "bi",
+    'béninois' : "bj",
+    'cambodgien' : "kh",
+    'camerounais' : "cm",
+    'canadien' : "ca",
+    'cap-verdiens' : "",
+    'centrafricain' : "cf",
+    'chilien' : "cl",
+    'chinois' : "cn",
+    'chypriote' : "cy",
+    'colombien' : "co",
+    'congolais' : "cg",
+    'coréen' : "kr",
+    'Costaricain' : "cr",
+    'croate' : "hr",
+    'cubain' : "cu",
+    'danois' : "dk",
+    'djiboutiens' : "dj",
+    'dominicain' : "dm",
+    'espagnol' : "es",
+    'est-allemand' : "de",
+    'estonien' : "ee",
+    'finlandais' : "fi",
+    'français' : "fr",
+    'gabonais' : "ga",
+    'ghanéen' : "gh",
+    'grec' : "gr",
+    'guatémaltèque' : "gt",
+    'guinéen' : "gn",
+    'géorgien' : "ge",
+    'haïtien' : "ht",
+    'hondurien' : "hn",
+    'hong-kongais' : "hk",
+    'hongrois' : "hu",
+    'indien' : "in",
+    'indonésien' : "id",
+    'Indéfini' : "",
+    'Irakien' : "iq",
+    'iranien' : "ir",
+    'irlandais' : "ie",
+    'islandais' : "is",
+    'israélien' : "il",
+    'italien' : "it",
+    'ivoirien' : "ci",
+    'jamaïcain' : "jm",
+    'japonais' : "jp",
+    'jordanien' : "jo",
+    'kazakh' : "kz",
+    'Kenyan' : "ke",
+    'kirghiz' : "kg",
+    'kowetien' : "kw",
+    'laotien' : "la",
+    'letton' : "lv",
+    'libanais' : "lb",
+    'libyen' : "ly",
+    'libérien' : "lr",
+    'liechtensteinois' : "li",
+    'lituanien' : "lt",
+    'luxembourgeois' : "lu",
+    'macédonien' : "mk",
+    'malaisien' : "my",
+    'malawites' : "mw",
+    'malgache' : "mg",
+    'malien' : "ml",
+    'maltais' : "mt",
+    'marocain' : "ma",
+    'mauriciens' : "mu",
+    'mauritanien' : "mr",
+    'mexicain' : "mx",
+    'moldave' : "md",
+    'Monegasque' : "mc",
+    'mongol' : "mn",
+    'monténégrin' : "me",
+    'mozambiquais' : "mz",
+    'namibien' : "na",
+    'ni-vanuatu' : "",
+    'nicaraguéen' : "ni",
+    'nigérian' : "ne",
+    'nigérien' : "ng",
+    'nord-coréen' : "kp",
+    'norvégien' : "no",
+    'néerlandais' : "nl",
+    'néo-zélandais' : "nz",
+    'népalais' : "np",
+    'ouest-allemand' : "de",
+    'ougandais' : "ug",
+    'ouzbek' : "uz",
+    'pakistanais' : "pk",
+    'palestinien' : "ps",
+    'panaméen' : "pa",
+    'papouan-néo guinéen' : "pg",
+    'paraguayen' : "py",
+    'philippin' : "ph",
+    'polonais' : "pl",
+    'portoricain' : "pr",
+    'portugais' : "pt",
+    'péruvien' : "pe",
+    'qatarien' : "qa",
+    'Québecois' : "ca",
+    'roumain' : "ro",
+    'russe' : "ru",
+    'rwandais' : "rw",
+    'samoan' : "us",
+    'saoudien' : "sa",
+    'serbe' : "rs",
+    'sierra-léonais' : "sl",
+    'singapourien' : "sg",
+    'slovaque' : "sk",
+    'slovène' : "si",
+    'somalien' : "so",
+    'soudanais' : "sd",
+    'soviétique' : "su",
+    'sri-lankais' : "lk",
+    'sud-africain' : "za",
+    'sud-coréen' : "kr",
+    'suisse' : "ch",
+    'surinamien' : "sr",
+    'suédois' : "se",
+    'swazi' : "sz",
+    'syrien' : "sy",
+    'sénégalais' : "sn",
+    'tadjik' : "tj",
+    'tanzanien' : "tz",
+    'taïwanais' : "tw",
+    'tchadien' : "td",
+    'tchèque' : "cz",
+    'tchécoslovaque' : "cz",
+    'thaïlandais' : "th",
+    'togolais' : "tg",
+    'tongien' : "to",
+    'trinidadiens' : "tt",
+    'tunisien' : "tn",
+    'turc' : "tr",
+    'turkmène' : "tm",
+    'tuvaluan' : "",
+    'U.S.A.' : "us",
+    'ukrainien' : "ua",
+    'uruguayen' : "uy",
+    'vietnamien' : "vn",
+    'vénézuélien' : "ve",
+    'yougoslave' : "yu",
+    'yéménite' : "ye",
+    'zambien' : "zm",
+    'zaïrois' : "",
+    'zimbabwéen' : "",
+    'égyptien' : "eg",
+    'émirati' : "",
+    'équato-guinéen' : "",
+    'équatorien' : "ec",
+    'éthiopien' : "et"
 
+}
+xx={'uk': (7313, 'britannique'), 'in': (1431, 'indien'), 'fr': (30204, 'français'), 'us': (37378, 'américain'), 'eg': (343, 'égyptien'), 'gr': (354, 'grec'), 'de': (6071, 'allemand'), 'se': (876, 'suédois'), 'sn': (95, 'sénégalais'), 'ca': (4339, 'canadien'), 'ch': (1257, 'suisse'), 'at': (731, 'autrichien'), 'cf': (77, 'centrafricain'), 'hk': (1061, 'hong-kongais'), 'it': (5518, 'italien'), 'kr': (901, 'sud-coréen'), 'af': (30, 'afghan'), 'cn': (1091, 'chinois'), 'br': (1058, 'brésilien'), 'pl': (652, 'polonais'), 'ar': (773, 'argentin'), 'ir': (479, 'iranien'), 'tr': (975, 'turc'), 'jp': (2806, 'japonais'), 'fi': (520, 'finlandais'), 'ru': (1198, 'russe'), 'rs': (112, 'serbe'), 'bg': (145, 'bulgare'), 'mk': (25, 'macédonien'), 'dz': (212, 'algérien'), 'be': (2324, 'belge'), 'ro': (290, 'roumain'), 'za': (245, 'sud-africain'), 'mx': (861, 'mexicain'), 'ua': (96, 'ukrainien'), 'dk': (725, 'danois'), 'ba': (55, 'bosniaque'), 'my': (43, 'malaisien'), 'cu': (174, 'cubain'), 'es': (2933, 'espagnol'), 'ie': (468, 'irlandais'), 'no': (397, 'norvégien'), 'hu': (500, 'hongrois'), 'cz': (561, 'tchécoslovaque'), 'sk': (155, 'slovaque'), 'pk': (33, 'pakistanais'), 'au': (1088, 'australien'), 'il': (674, 'israélien'), 'nz': (274, 'néo-zélandais'), 'sy': (58, 'syrien'), 'pt': (534, 'portugais'), 'uy': (69, 'uruguayen'), 'bf': (46, 'burkinabé'), 'is': (146, 'islandais'), 'tn': (181, 'tunisien'), 'pe': (127, 'péruvien'), 'lt': (97, 'lituanien'), 'ph': (213, 'philippin'), 'lu': (248, 'luxembourgeois'), 'tw': (253, 'taïwanais'), 'su': (183, 'soviétique'), 'cl': (248, 'chilien'), 'nl': (673, 'néerlandais'), 'ci': (32, 'ivoirien'), 'ge': (73, 'géorgien'), 'np': (14, 'népalais'), 'co': (185, 'colombien'), 'si': (62, 'slovène'), 'ye': (7, 'yéménite'), 'ng': (12, 'nigérien'), 'bj': (23, 'béninois'), '': (140, 'émirati'), 'ma': (259, 'marocain'), 'yu': (160, 'yougoslave'), 'li': (14, 'liechtensteinois'), 'qa': (92, 'qatarien'), 'ml': (36, 'malien'), 'cy': (22, 'chypriote'), 'hr': (112, 'croate'), 'lb': (237, 'libanais'), 'id': (74, 'indonésien'), 'sa': (8, 'saoudien'), 'sg': (69, 'singapourien'), 'th': (180, 'thaïlandais'), 'vn': (72, 'vietnamien'), 'mn': (19, 'mongol'), 'cg': (30, 'congolais'), 'ht': (51, 'haïtien'), 'bw': (4, 'botswanais'), 'kz': (62, 'kazakh'), 'gn': (19, 'guinéen'), 'mc': (8, 'Monegasque'), 'lk': (28, 'sri-lankais'), 'me': (8, 'monténégrin'), 'az': (13, 'azerbaïdjanais'), 'ee': (105, 'estonien'), 've': (94, 'vénézuélien'), 'ne': (55, 'nigérian'), 'lv': (97, 'letton'), 'dm': (24, 'dominicain'), 'ps': (100, 'palestinien'), 'mg': (12, 'malgache'), 'tj': (21, 'tadjik'), 'cm': (33, 'camerounais'), 'kh': (41, 'cambodgien'), 'sz': (4, 'swazi'), 'jm': (14, 'jamaïcain'), 'ni': (7, 'nicaraguéen'), 'gh': (10, 'ghanéen'), 'bh': (2, 'bahreini'), 'bo': (28, 'bolivien'), 'jo': (22, 'jordanien'), 'pr': (24, 'portoricain'), 'py': (12, 'paraguayen'), 'ag': (2, 'antiguais'), 'mr': (17, 'mauritanien'), 'rw': (8, 'rwandais'), 'ug': (7, 'ougandais'), 'kw': (12, 'kowetien'), 'al': (20, 'albanais'), 'ga': (9, 'gabonais'), 'td': (17, 'tchadien'), 'ke': (25, 'Kenyan'), 'zm': (6, 'zambien'), 'kg': (29, 'kirghiz'), 'am': (37, 'arménien'), 'ao': (8, 'angolais'), 'iq': (31, 'Irakien'), 'sd': (7, 'soudanais'), 'et': (13, 'éthiopien'), 'mu': (3, 'mauriciens'), 'gt': (19, 'guatémaltèque'), 'ec': (27, 'équatorien'), 'tg': (6, 'togolais'), 'pa': (12, 'panaméen'), 'sr': (1, 'surinamien'), 'la': (4, 'laotien'), 'bb': (2, 'barbadien'), 'tt': (3, 'trinidadiens'), 'bz': (4, 'belizien'), 'cr': (8, 'Costaricain'), 'uz': (7, 'ouzbek'), 'ly': (3, 'libyen'), 'kp': (14, 'nord-coréen'), 'md': (1, 'moldave'), 'na': (3, 'namibien'), 'hn': (3, 'hondurien'), 'mz': (9, 'mozambiquais'), 'tm': (1, 'turkmène'), 'pg': (5, 'papouan-néo guinéen'), 'so': (3, 'somalien'), 'mw': (3, 'malawites'), 'tz': (10, 'tanzanien'), 'bs': (2, 'bahaméen'), 'lr': (4, 'libérien'), 'bt': (5, 'bhoutanais'), 'mt': (6, 'maltais'), 'sl': (1, 'sierra-léonais'), 'ad': (1, 'andorran'), 'dj': (1, 'djiboutiens'), 'bi': (2, 'burundais'), 'to': (1, 'tongien'), 'bm': (1, 'Bermudien')}
+
+class DbHeader:
     def __init__(self, line=None, array=None):
         if line:
             self.line=line
@@ -48,7 +235,8 @@ class DbHeader:
     def __repr__(self): return self.__str__()
 
 class DbRow:
-    def __init__(self, head, line=None, array=None):
+    def __init__(self, head, userdata, line=None, array=None):
+        self.userdata=userdata
         if line:
             self.line=line
             if line[-1]=="\n": line=line[:-1]
@@ -78,9 +266,13 @@ class DbRow:
     def __getitem__(self, item):
         return self.resolve(item)
 
-    def resolve(self, item):
-        return self.data[self.header[item]]
+    def user(self, user):
+        self.userdata=user
 
+    def resolve(self, item):
+        if item in self.header.heads: return self.data[self.header[item]]
+        if self.userdata: return self.userdata.resolve(item)
+        return None
 
     def format(self, out=[]):
         if len(out):
@@ -88,6 +280,8 @@ class DbRow:
             for xx in out:
                 x=self.resolve(xx)
                 if isinstance(x, (float, int)): strout+=str(x)
+                if isinstance(x, list):
+                    strout+=json.dumps(x)
                 elif isinstance(x, str): strout+='"'+x.replace('"', '\\"')+'"'
                 strout+=";"
             return strout
@@ -108,7 +302,7 @@ class DbRow:
         return 0
 
     def _html_to_json(self, content):
-
+        pass
 
     def add_from_json(self, js):
         arr=[]
@@ -130,16 +324,42 @@ class DbRow:
         out=""
         for x in self.data:
             if isinstance(x, (float, int)): out+=str(x)
+            if isinstance(x, list):
+                out+=json.dumps(x)
             elif isinstance(x, str): out+='"'+x.replace('"', '\\"')+'"'
             out+=";"
         return out
     def __repr__(self): return self.__str__()
 
 class DB:
+    COLUMNS=[
+                           ("id", None, None, "id"),
+                           ("name", None, None, "name"),
+                           ("image/url", None, None, "image"),
+                           ("pays/*", utils.castarr, None, "nationality"),
+                           ("annee",  None, None, "year"),
+                           ("genre/*", utils.castarr, None, "genre"),
+                           ("description",  None, None, "description"),
+                           ("director/*/name", None, None, "director"),
+                           ("actor/*/name", utils.castarr, None, "actor"),
+                           ("creator/*/name", utils.castarr, None, "creator"),
+                           ("musicBy/*/name", utils.castarr, None, "musicBy"),
+                           ("aggregateRating/ratingValue", utils.floatvirg, None, "note"),
+                           ("aggregateRating/ratingCount", int, None, "nnote"),
+                           ("aggregateRating/reviewCount", int, None, "nreview")
+                       ]
 
-    def __init__(self, file=None, col=[], order=[]):
+    @staticmethod
+    def COLUMNS_NAME():
+        out=[]
+        for x in DB.COLUMNS: out.append(x[3])
+        return out
+
+    def __init__(self, file=None, userdata=None, col=[], order=[]):
         self.header=None
+        self.userdata=userdata
         self.data=[]
+        self.columns=col
         self.order=order
         self.time=time.time()
         if file:
@@ -151,6 +371,21 @@ class DB:
                     line=f.readline()
                 self.time = time.time() - self.time
                 #print("line -> ", line)
+        else:
+            self.header=DbHeader(array=DB.COLUMNS_NAME())
+
+
+    def list_pays(self):
+        out=[]
+        for x in  self.data:
+            payss=x.resolve("nationality")
+            if payss:
+                tmp=[]
+                for pays in payss:
+                    tmp.append(payslist[pays])
+                x.data[3]=tmp
+        return out
+
 
     def __str__(self):
         out=str(self.length())+" résultats en "+str( int(self.time*1000000)/1000)+" ms\n"
@@ -164,8 +399,8 @@ class DB:
     def length(self): return len(self.data)
 
     def match(self, expr):
-        if isinstance(expr, str): expr=Expr.parsestring(expr)
-        out=DB(col=expr.select, order=expr.order)
+        if isinstance(expr, str): expr=Expr.parsestring(expr, self.userdata)
+        out=DB(userdata=self.userdata, col=expr.select, order=expr.order)
         out.header=self.header
         for row in self.data:
             try:
@@ -181,7 +416,7 @@ class DB:
         return out
 
     @staticmethod
-    def fromjson(js, cols):
+    def fromjson(js, userdata):
         if isinstance(js, str):
             with open(js, "r") as f:
                 js=json.loads(f.read())
@@ -190,10 +425,12 @@ class DB:
         db.header=DbHeader(array=js["columns"])
         db.order=js["order"]
         for row in js["data"]:
-            db.data.append(DbRow(db.header, array=row))
+            db.data.append(DbRow(db.header, userdata=userdata,  array=row))
 
         return db
 
+    def addfromhtml(self, content):
+        self.data.append(DbRow(self.header, userdata=self.userdata, array=utils.extract(content, DB.COLUMNS)))
 
     def tojson(self):
         rows=[]
@@ -207,16 +444,20 @@ class DB:
             "data" :  rows
         }
 
-select=Expr.parsestring('select id, name, note where "will smith" in actor order by note desc')
+    def save(self, file):
+        with open(file, "w") as f:
+            f.write(json.dumps(self.tojson()))
+
+select=Expr.parsestring('year=1999', None)
+#select=Expr.parsestring(' True order by id', None)
 t=time.time()
 #adb = AlloDB("result.csv")
-ALLO_HEADER=[
-    "id",
-    "name",
-    "image/*/url",
 
-]
-adb = DB.fromjson("db.json")
+
+adb = DB.fromjson("db.json", None)
+
+
+
 t=time.time()-t
 print(t, "s \n")
 #with open("db.json", "w") as f:
@@ -225,7 +466,6 @@ print(t, "s \n")
 
 res=adb.match(select)
 print(res)
-
 while True:
     sys.stdout.write("$ ")
     sys.stdout.flush()
