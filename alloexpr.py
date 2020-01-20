@@ -1,5 +1,22 @@
-from allolexer import Lexer
-from io import StringIO
+
+# block		::=  inst [ ';' inst ]* ';'
+# inst		::= select | set | put
+# put		::= 'put'  expr [',' expr]*
+# set		::= 'set'  IDENT '=' expr [',' IDENT '=' expr]*  where expr
+# aff		::= IDENT '=' expr
+# selct		::= ['select' [ [IDENT [',' IDENT]* ] ] 'where'] expr [order by IDENT [desc]]
+# expr	 	::= exprOr
+# exprOr  	::= exprAnd | exprAnd ('or' | 'and') exprOr
+# exprAnd  	::= exprIn | exprIn ('&&' | 'or') exprAnd
+# exprIn  	::= exprBOr | exprBOr 'in' exprIn
+# exprBOr 	::= exprBAnd | exprBAnd '|' exprBOr
+# exprBAnd 	::= exprNot | exprNot '&' exprBAnd
+# exprNot 	::= exprComp | 'not' exprNot
+# exprComp	::= exprAdd | exprAdd ( '=' | '!=' | '<' | '<=' | '>' | '>=' ) exprComp
+# exprAdd 	::= exprMul | exprMul ( '+' | '-' ) exprAdd
+# exprMul 	::= prim | prim ( '*' | '/' | '%' ) exprMul
+# prim 		::= '(' expr ')' | NUMBER | array | IDENT
+# array 	::= '[' [expr] [ ',' expr ]* ] ']'
 
 class Context(dict):
     def __init__(self, d=None):
@@ -13,6 +30,9 @@ class Expr:
     def __init__(self):
         pass
 
+    def type(self):
+        return self.__class__
+
     def __str__(self):
         raise Exception("Not implemented")
 
@@ -23,12 +43,6 @@ class Expr:
     def optimize(self): return ConstExpr(self.val(None)) if self.isconst() else self
 
 
-    @staticmethod
-    def parsestring(string, data):
-        io = StringIO(string)
-        l=Lexer(io)
-        parser=Parser(l, data)
-        return parser.parse().optimize()
 
 
 class UnaryExpr(Expr):
@@ -62,7 +76,6 @@ class ConstExpr(UnaryExpr):
     def val(self, dico):
         return self.first
 
-
 class ArrayExpr(ConstExpr):
     def val(self, dico):
         out=[]
@@ -70,7 +83,12 @@ class ArrayExpr(ConstExpr):
             out.append(self.first[i].val(dico))
         return out
 
-
+class TupleExpr(ConstExpr):
+    def val(self, dico):
+        out=[]
+        for i in range(len(self.first)):
+            out.append(self.first[i].val(dico))
+        return out
 
 class VarExpr(UnaryExpr):
     def __init__(self, data, user):
@@ -156,11 +174,13 @@ class InExpr(BinaryExpr):
         if f==None or s==None: raise TypeError("")
         if isinstance(s, str): return f.lower() in s.lower()
         if isinstance(s, list):
-            if f in s: return s
+            if f in s:
+                return s
             if isinstance(f, str):
                 f=f.lower()
                 for x in s:
-                    if isinstance(x, str) and x.lower() in s: return True
+                    if isinstance(x, str) and f in x.lower():
+                        return True
                 return False
         if isinstance(s, (Range)): return s.is_in(f)
         raise Exception("Type error in IN")
@@ -185,12 +205,70 @@ class  RangeExpr(BinaryExpr):
 
 class NotExpr(UnaryExpr):
     def __init__(self, f): UnaryExpr.__init__(self,f)
-    def val(self, dico): return not self.second.val(dico)
+    def val(self, dico): return not self.first.val(dico)
     def __str__(self): return "not ("+str(self.first)+")"
 
+class BlocExpr(Expr):
+    def __init__(self, bloc):
+        Expr.__init__(self)
+        self.insts=bloc
 
-class RootExpr(Expr):
+    def val(self, dico):
+        return None
 
+    def __str__(self):
+        out=""
+        for x in self.insts:
+            out+=str(x)+";"
+        return out
+
+    def isconst(self):
+        for x in self.afflist:
+            if not x[1].isconst():
+                return False
+        return self.expr.isconst()
+
+    def optimize(self): return self
+
+class SetExpr(Expr):
+    def __init__(self, afflist, expr):
+        Expr.__init__(self)
+        self.afflist=afflist
+        self.expr=expr
+
+    def val(self, dico):
+        return dico.set(self.afflist, self.expr)
+
+    def __str__(self): return "( set "+str(self.afflist)+" where "+str(self.expr)+")"
+
+    def isconst(self):
+        for x in self.afflist:
+            if not x[1].isconst():
+                return False
+        return self.expr.isconst()
+
+    def optimize(self): return self
+
+class FunctionCall(Expr):
+    def __init__(self, name, params):
+        Expr.__init__(self)
+        self.name=name
+        self.params=params
+
+    def __str__(self):
+        out=self.name+"("
+        for i in range(len(self.params)):
+            out+=("; " if i>0 else "")+self.params[i]
+        return out+")"
+
+
+    def isconst(self): return False
+
+    def val(self, dico):
+        return dico.function(self.name, self.params)
+
+
+class SelectExpr(Expr):
     def __init__(self, select, expr, order):
         Expr.__init__(self)
         self.select=select
@@ -219,220 +297,3 @@ class RootExpr(Expr):
     def optimize(self):
         self.first = ConstExpr(self.val(None)) if self.isconst() else self.first
         return self
-
-class Parser:
-    def __init__(self, lexer, data):
-        self.lex=lexer
-        self.data=data
-        self.tok = Lexer.TOK_UNKNOWN
-
-    def _main(self):
-        ret = None
-        ret = self._instList()
-        return ret
-
-    def _next(self):
-        self.tok = self.lex.next()
-        self.data = self.lex.data
-        # print("Token", Lexer.tokstr(self.tok), " '" + str(self.data) + "'")
-        return self.tok
-
-    def parse(self):
-        self._next()
-        return self._root()
-
-
-    def _root(self):
-        select=[]
-        expr=None
-        order=[]
-        if self.tok==Lexer.TOK_IDENT and self.lex.current=="select":
-            self._next()
-
-            while True:
-                if self.tok!=Lexer.TOK_IDENT and self.tok!=Lexer.TOK_STRING:
-                    raise Exception("Ident expected in select statement")
-                select.append(self.lex.data)
-                self._next()
-                if self.tok==Lexer.TOK_VIRGULE:
-                    self._next()
-                elif self.lex.data=="where":
-                    self._next()
-                    break
-                else:
-                    raise Exception("Where expected after select statement")
-
-        expr=self._expr()
-
-        if self.tok==Lexer.TOK_IDENT and self.lex.current=="order":
-            self._next()
-            if self.tok==Lexer.TOK_IDENT and self.lex.current=="by": self._next()
-            while self.tok == Lexer.TOK_IDENT or self.tok==Lexer.TOK_STRING:
-                x=self.lex.data
-                self._next()
-                if self.tok == Lexer.TOK_IDENT:
-                    if self.lex.data=="desc": order.append((x, False))
-                    else: order.append((x,True))
-                else: order.append((x, True))
-                self._next()
-
-        return RootExpr(select, expr, order)
-
-    def _expr(self): return self._exprOr()
-
-    def _exprOr(self):
-        first = self._exprAnd()
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_OR: return first
-
-        self._next()
-        second = self._exprOr()
-        return OrExpr(first, second)
-
-    def _exprAnd(self):
-        first = self._exprIn()  #####
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_AND: return first
-
-        self._next()
-        second = self._exprAnd()
-        return AndExpr(first, second)
-
-    def _exprIn(self):
-        first = self._exprBOr() #####
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_IN: return first
-
-        self._next()
-        second = self._exprIn()
-        return InExpr(first, second)
-
-    def _exprBOr(self):
-        first = self._exprBAnd()
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_BOR: return first
-
-        self._next()
-        second = self._exprAnd()
-        return BorExpr(first, second)
-
-    def _exprBAnd(self):
-        first = self._exprNot()
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_BAND: return first
-
-        self._next()
-        second = self._exprAnd()
-        return BandExpr(first, second)
-
-    def _exprNot(self):
-        if self.tok == Lexer.TOK_NOT:
-            self._next()
-            x = self._exprNot()
-            return NotExpr(x)
-        else:
-            return self._exprComp()
-
-    def _exprComp(self):
-        first = self._exprAdd()
-        op = self.tok
-        opstr = self.data
-        if op != Lexer.TOK_CMP: return first
-
-        self._next()
-        second = self._exprComp()
-        if opstr=="=": return EqExpr(first, second)
-        if opstr=="!=": return NeExpr(first, second)
-        if opstr=="<": return LtExpr(first, second)
-        if opstr=="<=": return LeExpr(first, second)
-        if opstr==">": return GtExpr(first, second)
-        if opstr==">=": return GeExpr(first, second)
-        raise Exception("Error !")
-
-    def _exprAdd(self):
-        first = self._exprMul()
-        op = self.tok
-        if not (op in [Lexer.TOK_ADD, Lexer.TOK_SUB]): return first
-
-        self._next()
-        second = self._exprAdd()
-        if op == Lexer.TOK_ADD: return AddExpr(first, second)
-        return SubExpr(first, second)
-
-    def _exprMul(self):
-        first = self._prim()
-        op = self.tok
-
-        if not (op in [Lexer.TOK_MUL, Lexer.TOK_DIV, Lexer.TOK_MODULO]):    return first
-
-        self._next()
-        second = self._exprMul()
-        if op == Lexer.TOK_MODULO: return ModExpr(first, second)
-        if op == Lexer.TOK_MUL: return MultExpr(first, second)
-        if op == Lexer.TOK_DIV: return DivExpr(first, second)
-
-    PRIM_PREMIER = [Lexer.TOK_PO, Lexer.TOK_INT, Lexer.TOK_FLOAT, Lexer.TOK_IDENT, Lexer.TOK_BOOL, Lexer.TOK_STRING,
-                    Lexer.TOK_CO]
-
-    def _prim(self):
-        if not (self.tok in Parser.PRIM_PREMIER): raise Exception(
-            "_exprMul: Attendu '(', int ou float : " + Lexer.tokstr(self.tok))
-
-        # (
-        if self.tok == Lexer.TOK_PO:
-            self._next()
-            x = self._expr()
-            if self.tok != Lexer.TOK_PF:
-                raise Exception("Parenthese fermante manquante=> " + Lexer.tokstr(self.tok))
-            self._next()
-            return x
-        # Number
-        if self.tok in [Lexer.TOK_INT, Lexer.TOK_FLOAT, Lexer.TOK_BOOL, Lexer.TOK_STRING]:
-            ret = ConstExpr(self.data)
-            self._next()
-            return ret
-        if self.tok == Lexer.TOK_CO:
-            return self._array()
-        # ident
-        if self.tok == Lexer.TOK_IDENT:
-            x=self.lex.current
-            self._next()
-            if x=="range":
-                if self.tok==Lexer.TOK_PO:
-                    self._next()
-                    first=self._exprAdd()
-                    if self.tok==Lexer.TOK_VIRGULE:
-                        self._next()
-                        second=self._exprAdd()
-                        if self.tok==Lexer.TOK_PF:
-                            self._next()
-                            return RangeExpr(first, second)
-
-                raise Exception("Range need 2 parameters")
-            return VarExpr(x, self.data)
-        raise Exception("Attendu: int, float ou '(' => " + Lexer.tokstr(self.tok))
-
-    def _array(self):
-        if self.tok != Lexer.TOK_CO: raise Exception("'[' expected")
-        self._next()
-        x = []
-
-        if self.tok == Lexer.TOK_CF:
-            self._next()
-            return ArrayExpr(x)
-
-        x.append(self._expr())
-
-        while self.tok == Lexer.TOK_VIRGULE:
-            self._next()
-            x.append(self._expr())
-
-        if self.tok != Lexer.TOK_CF: raise Exception("Array must end with ']'")
-        self._next()
-        return ArrayExpr(x)
-

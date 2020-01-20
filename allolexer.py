@@ -195,6 +195,8 @@ class Lexer:
     CMP = "=<>!"
     COMPARES = ["=", "=", "!", "!=", "<", "<=", ">", ">="]
 
+
+
     def __init__(self, fd):
         self.fd = fd
         self.token = Lexer.OPERATION
@@ -204,6 +206,11 @@ class Lexer:
         self._nc()
         self.isFinished = False
         self.symbols = SymbolLexer(Lexer.OPERATION.keys())
+
+    def __str__(self):  return Lexer.tokstr(self.token)+' "'+str(self.data)+'"'
+
+    def __repr__(self): return str(self)
+
 
     def _nc(self):
         self.char = self.fd.read(1)
