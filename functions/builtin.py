@@ -14,9 +14,10 @@ def fct_rand(db, row, args):
     if len(args)>1: n = args[1].val(row)
     out=ndb.emptyset()
     found={}
-    for i in range(n):
+    for i in range(min(n,len(ndb))):
         x=random.randint(0,len(ndb))
         while x in found: random.randint(0,len(ndb))
         found[x]=True
         out.data.append(ndb.row_at(x))
     return out
+

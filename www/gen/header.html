@@ -1,0 +1,134 @@
+<style>
+.title {
+    font-size: 24px;
+}
+
+.logo {
+}
+
+
+.menu-icon {
+    font-size: 32px ! important;
+    margin-right: 10px;
+}
+
+.header {
+    margin: 0 ! important;
+    height: 48px;
+}
+.header > a {
+
+}
+
+.sidenav {
+
+}
+
+.nav-text {
+    font-size: 18px ! important;
+}
+
+.header > .right {
+    position: absolute;
+    top: 2px;
+    right: 5px;
+}
+
+.header > .left {
+    position: absolute;
+    top: 2px;
+    left: 5px;
+}
+
+</style>
+
+
+<div class="header fond-color-1">
+    <span data-target="slide-out" class="sidenav-trigger left color-4"><i class="material-icons menu-icon">menu</i></span>
+    <center><a href="/" class="title color-4">Cyber Box </a></center>
+    <!--<span class="right">
+        <a href="/aide.html"><i class="color-4 material-icons menu-icon">help</i></a>
+    </span>-->
+
+</div>
+
+<ul id="slide-out" class="sidenav menu-text fond-color-1">
+    <li class="navbar-item"><div class="user-view"></li>
+    <li><a  class="nav-text color-4" class="navbar-item" href="/browse">Accueil</a></li>
+    <li><div class="divider"></div></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="#!">Documents</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="#!">Images</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="#!">Audio</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="#!">Vidéo</a></li>
+    <li><div class="divider"></div></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/preferences.html">Options</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/search">Rechercher</a></li>
+    <li><div class="divider"></div></li>
+    {{#user}}
+        {{#admin}}
+            <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/disconnect">Se déconnecter</a></li>
+        {{/admin}}
+        {{^admin}}
+            <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/login">Se connecter</a></li>
+        {{/admin}}
+    {{/user}}
+
+</ul>
+
+<div class="card darken-1 modal fond-color-1" id="error">
+    <div class="card-content">
+        <center><span class="card-title color-4" id="error-title"></span></center>
+    </div>
+    <div class="card-action">
+        <p class="color-4" id="error-text">
+
+        </p>
+        <div class="row">
+            <a class="btn fond-color-2 color-4 col offset-s3 s6" onclick="modalClose('error')">OK</a>
+        </div>
+    </div>
+</div>
+
+<div class="card darken-1 modal fond-color-1" id="confirm">
+    <div class="card-content">
+        <center><span class="card-title color-4" id="confirm-title"></span></center>
+    </div>
+    <div class="card-action">
+        <p class="color-4" id="confirm-text">
+
+        </p>
+        <div class="row">
+            <a id="confirm-no" class="btn fond-color-2 color-4 col s5">Non</a>
+            <a id="confirm-yes" class="btn fond-color-2 color-4 col offset-s2 s5">Oui</a>
+        </div>
+    </div>
+</div>
+
+
+<div class="card light-grey darken-1 modal" id="loading">
+    <div class="card-content">
+        <center><span class="card-title" id="loading-text">r</span></center>
+    </div>
+    <div class="card-action">
+        <center>
+            <div class="preloader-wrapper big active">
+                <div class="spinner-layer spinner-blue-only">
+                    <div class="circle-clipper left">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="gap-patch">
+                        <div class="circle"></div>
+                    </div>
+                    <div class="circle-clipper right">
+                        <div class="circle"></div>
+                    </div>
+                </div>
+            </div>
+        </center>
+    </div>
+</div>
+
+
+<script>
+data=<#json(get())>
+</script>

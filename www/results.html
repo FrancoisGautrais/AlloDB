@@ -1,0 +1,32 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Rechercher</title>
+
+</head>
+
+<body>
+    <#include("www/gen/header.html")>
+
+    <main>
+        <div class="container row">
+            <div class="row col  s12 offset-m4 m4">
+                <center><h1>Resultat</h1></center>
+                {{requests}}
+            </div>
+        </div>
+    </main>
+
+    <#include("www/gen/footer.html")>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+</body>
+
+</html>

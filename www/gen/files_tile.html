@@ -1,0 +1,93 @@
+{{^is_root}}
+    <div class="col s4 m3 l2">
+        <div class="card">
+            <a href="/browse/{{parent}}"><center><i class="big-icon material-icons color-2">keyboard_backspace</i></center></a>
+            <div class="custom-card-action card-action ">
+                <span class="color-5 flow-text">
+                    <center class="tile-filename">Retour<br><br></center>
+                    <div class="second-line"><center><div class="file-info"><br></div></center></div>
+                </span>
+            </div>
+        </div>
+    </div>
+{{/is_root}}
+
+{{#can_write}}
+<div class="col s4 m3 l2">
+    <div class="card">
+        <a onclick="on_new()"><center><i class="big-icon material-icons color-1">add</i></center></a>
+        <div class="custom-card-action card-action ">
+            <span class="color-5 flow-text">
+                <center class="tile-filename">Nouveau<br><br></center>
+                <div class="second-line"><center><div class="file-info"><br></div></center></div>
+            </span>
+        </div>
+    </div>
+</div>
+{{/can_write}}
+
+{{#ls}}
+    <div class="col s4 m3 l2 sortable" data-name="{{name}}" data-size="{{size}}" data-date="{{creation}}">
+        <!--<a href="{{url_prefix}}{{dir}}{{name}}">-->
+        <a onclick="url('{{url_prefix}}{{dir}}{{name}}')"
+            oncontextmenu="return click_open('{{dir}}', '{{name}}', {{#is_dir}}true{{/is_dir}}{{^is_dir}}false{{/is_dir}});">
+            <div class="card light-grey darken-2">
+                    <center>
+                        <i class="material-icons color-3 big-icon">
+                            {{#is_dir}}folder{{/is_dir}}
+                            {{^is_dir}}<div class="autoreplace" data-type="mime" data-value="{{mime}}"></div>{{/is_dir}}
+                        </i>
+                    </center>
+
+                <div class="custom-card-action card-action">
+                    <span class="color-5 flow-text">
+                        <center class="tile-filename"><div class="autoreplace" data-type="boundtext" data-value="{{name}}"></div></center>
+                        <div class="second-line">
+                            <center>
+                                <div class="file-info">
+                                        {{^is_dir}}<div class="autoreplace" data-type="size" data-value="{{size}}"></div>{{/is_dir}}
+                                        {{^is_dir}}-{{/is_dir}}<div class="autoreplace" data-type="date" data-value="{{creation}}"></div>
+                                </div>
+                            </center>
+                        </div>
+                    </span>
+                </div>
+            </div>
+        </a>
+    </div>
+{{/ls}}
+
+<style>
+.custom-card-action {
+    padding-top: 5px ! important;
+    padding-bottom: 5px ! important;
+    padding-left: 5px ! important;
+    padding-right: 5px ! important;
+}
+
+
+.file-info {
+    font-size: 10px ! important;
+}
+
+.tile-icon {
+    font-size: 64px;
+}
+
+.tile-filename {
+    font-size: <#mobile("12px","14px;")>;
+    word-break: keep-all;
+    white-space: normal
+}
+
+.second-line {
+    padding: 0;
+    margin: 0;
+}
+</style>
+
+<script>
+
+MAX_STR_LENGTH=<#mobile(14, 25)>
+MAX_STR_LINE=2
+</script>

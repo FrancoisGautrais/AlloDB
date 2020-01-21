@@ -1,0 +1,234 @@
+
+
+<style>
+nav {
+    padding-left:12px;
+    margin-bottom: 20px;
+}
+.menu-text {
+    font-size: 24px ! important;
+}
+
+
+
+.menu {
+    font-size: 12px;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.adress-bar > span {
+    height: 48px;
+    display: block;
+}
+
+.prefix {
+    top: 0px ! important;
+}
+
+.adress-bar > div > a {
+    position: absolute;
+    right: 5px;
+    top: 0px;
+}
+
+.search-bar > div {
+    position: absolute;
+}
+
+.search-bar {
+    display: none;
+    height: 48px;
+    margin-left: -18px;
+}
+
+
+.nav-icons {
+    margin-left: 5px;
+}
+
+
+</style>
+
+<script>
+function radioValue(name, val=null) {
+    if(val)
+    {
+        $("input[name='group_"+name+"']").each(function(a,b){
+            $(b).prop("checked", $(b).data("value")==val)
+        })
+     }
+    else return $("input[name='group_"+name+"']:checked").data("value")
+}
+
+function show_display_options(){
+    modal('display')
+    {{#user}}
+        $("#s_display").val(data.user.display)
+        $("#s_sort").val(data.user.sort)
+        $("#s_order").val(data.user.order)
+    {{/user}}
+}
+
+function confirm_display(){
+    obj = {
+        order: $("#s_order").val(),
+        sort: $("#s_sort").val(),
+        display: $("#s_display").val()
+    }
+    needRefresh=obj.display!=data.user.display
+    if(!needRefresh)
+        sort(obj.sort, obj.order)
+
+    $.ajax({
+        type: 'POST',
+        data: JSON.stringify(obj),
+        headers: {
+            "Content-Type": "application/json"
+        },
+        url: "/user/modify",
+        success: function(jsonData){
+            if(needRefresh) window.location.reload()
+            else modalClose("display")
+        },
+        error: function(err){
+            error("Erreur", err.responseText)
+        },
+    });
+    modalClose("display")
+}
+
+function showSearchBar() {
+    var sb=$(".search-bar")
+    var div=$("main")
+    var ab=$(".adress-bar")
+    console.log("show", sb.css("display")=="none")
+    if(sb.css("display")=="none")
+    {
+        sb.css("display", "block")
+        div.css("min-height", parseInt(div.css("min-height")+48)+"px");
+        ab.height(ab.height()+48)
+        M.updateTextFields();
+        $("#it-search-bar").focus()
+    }
+}
+
+
+function hideSearchBar() {
+    var sb=$(".search-bar")
+    console.log("hide")
+    var div=$("main")
+    var ab=$(".adress-bar")
+    if(sb.css("display")!="none"){
+        sb.css("display", "none")
+        div.css("min-height", parseInt(div.css("min-height")-48)+"px");
+        ab.height(ab.height()-48)
+
+    }
+
+}
+
+function filterName(filter) {
+
+    filter=$("#it-search-bar").val().toLowerCase()
+    $(".sortable").each(function(idx, el){
+        el=$(el)
+        console.log(el.data("name").toLowerCase(), filter)
+        if(el.data("name").toLowerCase().search(filter)>=0) el.show()
+        else el.hide()
+    })
+}
+
+function toggleSearchBar(){
+    var sb=$(".search-bar")
+    return (sb.css("display")=="none")?showSearchBar():hideSearchBar()
+}
+
+function clearSearchBar() {
+    bar=$("#it-search-bar")
+    bar.val("")
+    filterName()
+    bar.focus()
+}
+
+
+</script>
+
+<nav class="adress-bar fond-color-1 color-4">
+    <span>
+
+        <ul>
+            <div class="autoreplace" data-type="menupath" data-value="{{path}}"></div>
+        </ul>
+        <span class="right nav-icons" id="search-bar-trigger"><a onclick="toggleSearchBar()" ><i class="color-4 material-icons menu-icon">search</i></a></span>
+        <span class="right nav-icons"><a onclick="show_display_options()" ><i class="color-4 material-icons menu-icon">build</i></a></span>
+    </span>
+    <div class="search-bar row">
+        <div class="input-field col s12">
+            <i class="material-icons prefix menu-icon color-4" onclick="clearSearchBar()">cancel</i>
+            <input id="it-search-bar" type="text" class="color-4 medium-text" oninput="filterName()">
+            <label for="it-search-bar"></label>
+        </div>
+    </div>
+</nav>
+
+
+<div class="card darken-1 modal" id="display">
+    <div class="card-content">
+        <center><span class="card-title" >Options</span></center>
+    </div>
+    <div class="card-action row">
+        <center><!--
+            <p class="radio-group">
+                <span>Affichage :</span>
+                <label>
+                    <input name="group_display" type="radio" data-value="tile" />
+                    <span  class="radio">Tuile</span>
+                </label>
+                <label>
+                    <input name="group_display" type="radio" data-value="list"/>
+                    <span  class="radio">Liste</span>
+                </label>
+            </p>
+            <p class="radio-group">
+                <span>Tri :</span>
+                <label>
+                    <input name="group_sort" type="radio"  data-value="size" checked />
+                    <span  class="radio">Taille</span>
+                </label>
+                <label>
+                    <input name="group_sort" type="radio" data-value="date"/>
+                    <span  class="radio">Date</span>
+                </label>
+                <label>
+                    <input name="group_sort" type="radio" data-value="name"/>
+                    <span  class="radio">Nom</span>
+                </label>
+            </p>
+            <p class="radio-group">
+                <span>Ordre :</span>
+                <label>
+                    <input name="group_order" type="radio"  data-value="inc" checked />
+                    <span  class="radio">Croissant</span>
+                </label>
+                <label>
+                    <input name="group_order" type="radio" data-value="dec"/>
+                    <span  class="radio">Décroissant</span>
+                </label>
+            </p>-->
+            <#row(select("s_display", "Affichage", objl("list", "Liste", "tile","Tuiles")))>
+            <#row(select("s_sort", "Trier par", objl("name", "Nom", "date","Date", "size", "Taille")))>
+            <#row(select("s_order", "Ordre", objl("inc", "Croissant", "dec","Décroissant")))>
+        </center>
+
+        <div class="row">
+            <a class="btn fond-color-2 color-4 col offset-s3 s6" onclick="confirm_display()">OK</a>
+        </div>
+    </div>
+
+</div>
+
+
+
+
+

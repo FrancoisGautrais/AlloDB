@@ -1,0 +1,155 @@
+<input type="file" id="file" name="file" class="hidden-button"/>
+
+
+<div class="card darken-1 modal" id="add_file_dir">
+    <div class="card-content">
+        <center><span class="card-title" >Ajouter</span></center>
+    </div>
+    <div class="card-action row">
+        <div class="card darken-1 col s6 fond-color-3 color-4" onclick="new_dir()">
+            <div class="card-content">
+                <center>Dossier</center>
+            </div>
+            <div class="card-action row">
+                <center><i class="material-icons medium-icon">folder</i></center>
+            </div>
+        </div>
+
+        <div class="card darken-1 col  s6 fond-color-2 color-4" onclick="new_file()">
+            <div class="card-content">
+                <center>Fichier</center>
+            </div>
+            <div class="card-action row">
+                <center><i class="material-icons medium-icon">insert_drive_file</i></center>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<div class="card darken-1 modal" id="add_dir">
+    <div class="card-content">
+        <center><span class="card-title" >Nouveau dossier</span></center>
+    </div>
+    <div class="card-action row">
+        <div class="col s12">
+            Nom du nouveau dossier:
+            <div class="input-field">
+                <input id="new_dir" type="text" class="validate">
+                <label for="new_dir">Nom</label>
+            </div>
+        </div>
+        <a class="btn fond-color-2 color-4 col offset-s3 s6" onclick="confrmNewDir()">Créer</a>
+    </div>
+</div>
+
+<div class="card darken-1 modal" id="edit_file">
+    <div class="card-content">
+        <center><span class="card-title" >Editer</span></center>
+    </div>
+    <div class="card-action row">
+        <#row(input_text("edit_name", "Nom", "text", "", not(get("user","admin"))))>
+        <#row(multiple_select("s_perm", "Permission", objl("r", "Lecture", "w", "Écriture", "x", "Execution")))>
+        <#row(checkbox("edit_is_hidden", "Fichier caché"))>
+
+        <a class="btn fond-color-1 color-4 col  s6" onclick="confirm_delete()">Supprimer</a>
+        <a class="btn fond-color-2 color-4 col  s6" onclick="confirm_modify()">Modifier</a>
+    </div>
+</div>
+
+<div  class="darken-1 modal" id="file_info">
+    <table>
+        <tbody id="fi_tbody">
+        </tbody>
+    </table>
+</div>
+
+<div class="collection modal row" id="file_click">
+    <center><a class="collection-item color-5" ><b id="fc_name"></b></a></center>
+    <!--<center><a class="collection-item color-3" id="fc_info">Informations</a></center>
+    <center><a class="collection-item color-3" id="fc_download">Télécharger</a></center>
+    <center><a class="collection-item color-3" id="fc_modify">Modifier</a></center>
+    <center><a class="collection-item color-3" id="fc_remove">Supprimer</a></center>-->
+    <div class="col s6 m3 l3">
+        <div class="card light-grey darken-2">
+            <a id="fc_info_a">
+                <center> <i class="material-icons color-5 medium-icon">info</i></center>
+                <div class="custom-card-action card-action">
+                    <span class="color-5">
+                        <center class="tile-filename" id="fc_info">Informations</center>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="col s6 m3 l3">
+        <div class="card light-grey darken-2" >
+            <a id="fc_download_a">
+                <center> <i class="material-icons color-3 medium-icon" id="fc_download_icon">file_download</i></center>
+                <div class="custom-card-action card-action">
+                    <span class="color-5">
+                        <center class="tile-filename" id="fc_download">Télécharger</center>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="col s6 m3 l3">
+        <div class="card light-grey darken-2" >
+            <a id="fc_modify_a">
+                <center> <i class="material-icons color-2 medium-icon">create</i></center>
+                <div class="custom-card-action card-action">
+                    <span class="color-5">
+                        <center class="tile-filename" id="fc_modify">Modifier</center>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+    <div class="col s6 m3 l3">
+        <div class="card light-grey darken-2">
+            <a id="fc_remove_a">
+                <center> <i class="material-icons color-1 medium-icon">delete</i></center>
+                <div class="custom-card-action card-action">
+                    <span class="color-5">
+                        <center class="tile-filename" id="fc_remove">Supprimer</center>
+                    </span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+<style>
+.overlay{
+    height: 100%;
+    width: 100%;
+    background-color: #7f7f7f;
+    opacity: 0.5;
+    position: absolute;
+    z-index: 10;
+    display: none;
+    background-color: rgba(0,0,0,0.5);
+}
+
+
+
+.overlay-content {
+    height: 66%;
+    display: none;
+    width: 66%;
+    background-color: rgba(255,255,255,1);
+    position: absolute;
+    top: 17%;
+    left: 17%;
+    z-index: 11;
+}
+
+.hidden-button {
+    position: absolute;
+    top: -100px;
+}
+
+.onoverlay{
+}
+</style>

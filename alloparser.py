@@ -98,18 +98,24 @@ class Parser:
         if self.tok==Lexer.TOK_IDENT and self.lex.current=="select":
             self._next()
 
-            while True:
-                if self.tok!=Lexer.TOK_IDENT and self.tok!=Lexer.TOK_STRING:
-                    raise Exception("Ident expected in select statement")
-                select.append(self.lex.data)
+            if self.tok==Lexer.TOK_MUL:
                 self._next()
-                if self.tok==Lexer.TOK_VIRGULE:
+                if self.lex.data == "where":
                     self._next()
-                elif self.lex.data=="where":
+                else: raise Exception("Where expected after select statement")
+            else:
+                while True:
+                    if self.tok!=Lexer.TOK_IDENT and self.tok!=Lexer.TOK_STRING:
+                        raise Exception("Ident expected in select statement")
+                    select.append(self.lex.data)
                     self._next()
-                    break
-                else:
-                    raise Exception("Where expected after select statement")
+                    if self.tok==Lexer.TOK_VIRGULE:
+                        self._next()
+                    elif self.lex.data=="where":
+                        self._next()
+                        break
+                    else:
+                        raise Exception("Where expected after select statement")
         else: raise Exception("select expected")
 
         expr=self._exprOr()
