@@ -56,9 +56,6 @@ _HTTP_CODE={
     504: "Gateway Time-out"
 }
 
-
-
-
 BODY_DICT="dict"
 BODY_EMPTY="none"
 BODY_STRING="string"

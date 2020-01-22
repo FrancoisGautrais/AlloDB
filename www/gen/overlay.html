@@ -49,9 +49,6 @@
         <center><span class="card-title" >Editer</span></center>
     </div>
     <div class="card-action row">
-        <#row(input_text("edit_name", "Nom", "text", "", not(get("user","admin"))))>
-        <#row(multiple_select("s_perm", "Permission", objl("r", "Lecture", "w", "Écriture", "x", "Execution")))>
-        <#row(checkbox("edit_is_hidden", "Fichier caché"))>
 
         <a class="btn fond-color-1 color-4 col  s6" onclick="confirm_delete()">Supprimer</a>
         <a class="btn fond-color-2 color-4 col  s6" onclick="confirm_modify()">Modifier</a>

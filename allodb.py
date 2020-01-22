@@ -391,7 +391,12 @@ class DbRow:
 
         self.userdata.set(self.id, item, value)
 
-
+    def json(self, format=[]):
+        if len(format)==0: format=self.header.allheads()
+        out={}
+        for x in format:
+            out[x]=self.resolve(x)
+        return out
 
     def __str__(self):
         out=""
@@ -452,7 +457,15 @@ class DB:
     def function(self, name, args):
         return allofunction.call(self, name, args)
 
-
+    def moustache(self):
+        arr=[]
+        for x in self.data:
+            arr.append(x.json(self.columns))
+        return {
+            "count" : len(self.data),
+            "time" : int(self.time*1000)/1000,
+            "data" : arr
+        }
 
     def list_pays(self):
         out=[]

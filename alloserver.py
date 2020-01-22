@@ -1,6 +1,6 @@
 import json
 import os
-
+from urllib.parse import unquote_plus
 import config
 from allodb import DB
 import user
@@ -99,15 +99,14 @@ class AlloServer(RESTServer):
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
-        request=json.loads(req.body_json()["request"])
+        body=req.body_json()
 
-
-        print(json_to_request(request))
-        x=str(self.db.execute(json_to_request(request)))
-        res.serve_file_gen(path, { "requests" : x})
-
-
-
+        if "json" in body:
+            request=json_to_request(json.loads(body["json"]))
+        elif "text" in body:
+            request="(select * where "+unquote_plus(body["text"])+" )"
+        x=self.db.execute(request).moustache()
+        res.serve_file_gen(path, x)
 
 filecache.init()
 

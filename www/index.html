@@ -130,7 +130,7 @@
             $('body').append($('<form/>')
               .attr({'action': "results", 'method': 'post', 'id': 'replacer'})
               .append($('<input/>')
-                .attr({'type': 'hidden', 'name': 'request', 'value': JSON.stringify(postjson)})
+                .attr({'type': 'hidden', 'name': 'json', 'value': JSON.stringify(postjson)})
               )
             ).find('#replacer').submit();
         }
