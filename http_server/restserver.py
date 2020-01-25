@@ -110,7 +110,7 @@ class RESTServer(HTTPServer):
                 if p.startswith(base):
                     dir, needeauth, auth, gen = self.static_dirs[base]
                     p=p[len(base):]
-                    if len(p)==0: p="browse.html"
+                    if len(p)==0: p="index.html"
                     if p[0]=="/": p=p[1:]
                     path=os.path.join(dir,p)
                     if  (not auth) or (not needeauth) or (not needeauth.call((req, res))) or auth.call((req, res)):

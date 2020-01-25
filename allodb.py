@@ -440,6 +440,10 @@ class DB:
         self.userdata=userdata
         self.data=[]
         self.columns=col
+        self.ids={}
+        self.actors={}
+        self.directors={}
+        self.pays={}
         self.order=order
         self.time=time.time()
         if file:
@@ -453,6 +457,9 @@ class DB:
                 #print("line -> ", line)
         else:
             self.header=DbHeader(self, userdata, array=DB.COLUMNS_NAME())
+        if root:
+            self.ids=root.ids
+            self.actors=root.actors
 
     def function(self, name, args):
         return allofunction.call(self, name, args)
@@ -490,6 +497,29 @@ class DB:
     def length(self): return len(self.data)
 
     def _root(self): return self.root._root() if self.root else self
+
+    def append(self, row):
+        self.data.append(row)
+        self.ids[row.resolve("id")]=row
+        actors=row.resolve("actor")
+        if actors:
+            for actor in actors:
+                actor=actor.lower()
+                if not actor in self.actors: self.actors[actor]=[]
+                self.actors[actor].append(row)
+        directors=row.resolve("director")
+        if directors:
+            for director in directors:
+                director=director.lower()
+                if not director in self.directors: self.directors[director]=[]
+                self.directors[director].append(row)
+        pays=row.resolve("nationality")
+        if pays:
+            for pay in pays:
+                pay=pay.lower()
+                if not pay in self.pays: self.pays[pay]=[]
+                self.pays[pay].append(row)
+
 
     def put(self, expr):
         array=expr.val(self)
@@ -600,7 +630,7 @@ class DB:
         db.header=DbHeader(db, userdata, array=js["columns"])
         db.order=js["order"]
         for row in js["data"]:
-            db.data.append(DbRow(db.header, userdata=userdata,  array=row))
+            db.append(DbRow(db.header, userdata=userdata,  array=row))
 
         return db
 

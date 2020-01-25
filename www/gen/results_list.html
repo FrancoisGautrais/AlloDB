@@ -33,23 +33,25 @@
 <p>{{count}} résultats en {{time}} secondes</p>
 {{#data}}
 <ul class="collection sortable" data-name="{{name}}">
-    <a onclick="url('film/{{film}}')">
-        <li class="collection-item custom-list" >
+
+    <li class="collection-item custom-list" >
+        <a href="film/{{id}}">
             <span class="custom-list-item-icon">
                 <img src="{{image}}" height="150px">
-
             </span>
-            <span class="custom-list-item second-line">
+        </a>
+        <span class="custom-list-item second-line">
+            <a href="film/{{id}}">
                 <div class="title-filename color-5">{{name}}</div>
-                <div class="subtitle-filename color-5">
-                    <p> {{year}}<br>
-                        De {{#director}} {{.}}&nbsp;  {{/director}}<br>
-                        {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
-                        {{#nationality}}{{.}} &nbsp;  {{/nationality}}<br>
-                        {{note}}/5 (parmi {{nnote}})</p>
-                </div>
-            </span>
-        </li>
-    </a>
+            </a>
+            <div class="subtitle-filename color-5">
+                <p> {{year}}<br>
+                    De {{#director}} {{.}}&nbsp;  {{/director}}<br>
+                    {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
+                    {{#nationality}}{{.}} &nbsp;  {{/nationality}}<br>
+                    {{note}}/5 (parmi {{nnote}})</p>
+            </div>
+        </span>
+    </li>
 </ul>
 {{/data}}

@@ -219,8 +219,6 @@ class HTTPRequest(_HTTP):
             self._body_type=BODY_BYTES
             self.body=self._socket.read(cl)
 
-
-
     def _set_header(self, key : str, val):
         if val and key.lower()=="cookie":
             clist = val.split(";")
