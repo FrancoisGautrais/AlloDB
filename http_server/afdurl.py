@@ -81,9 +81,3 @@ test= {
     #"/a/#b/c": [ "/a/bonjour", "bonjour/a/c", "/a/bonjour/c", "/a/bonjour/b/"],
     "/a/*b/fin": [ "/a/bonjour", "bonjour/a/c", "/a/bonjour/c/bc/fin", "/a/bonjour/b/fin"]
 }
-print("ICI=========")
-for x in test:
-    arr=test[x] if isinstance(test[x], list) else [test[x]]
-    print("----",x,"------")
-    for y in arr:
-        print("\t", y," - ", testurl(x, y))

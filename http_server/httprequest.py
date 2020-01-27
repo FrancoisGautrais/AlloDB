@@ -108,7 +108,6 @@ class _HTTP:
             return x
         else: return self.header("Content-Type")
 
-
     def body_json(self):
         if self._body_type==BODY_DICT: return self.body
         raise Exception("Bad body format")
@@ -274,7 +273,11 @@ class HTTPResponse(_HTTP):
         else:
             self._body_type=BODY_EMPTY
 
-    def serve_file_gen(self, path : str, data):
+    def serve_file_gen(self, path : str, data={}):
+        if not os.path.isfile(path):
+            log.error("Le fichier '"+str(path)+"' est introuvable")
+            self.serve404()
+            return None
         m=filecache.mime(path)
         self.content_type(m)
         self.header("Content-Length", str(os.stat(path).st_size))
@@ -388,7 +391,6 @@ class HTTPResponse(_HTTP):
     def serve401(self, header={}, data={}, file=None, filegen=None ): self.serv(401, header, data, file, filegen)
     def serve403(self, header={}, data={}, file=None, filegen=None ): self.serv(403, header, data, file, filegen)
     def serve404(self, header={}, data={}, file=None, filegen=None ): self.serv(404, header, data, file, filegen)
-
 
     def serve500(self, header={}, data={}, file=None, filegen=None ): self.serv(500, header, data, file, filegen)
     def serve501(self, header={}, data={}, file=None, filegen=None ): self.serv(501, header, data, file, filegen)

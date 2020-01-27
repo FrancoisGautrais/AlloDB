@@ -17,7 +17,7 @@ def _mime(path):
     try:
         _mime_lock.acquire()
         x=magic.detect_from_filename(path)
-        log.info(path, ":", x)
+        #log.info(path, ":", x)
         mi= x.mime_type
         _mime_lock.release()
         return mi

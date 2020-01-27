@@ -30,10 +30,16 @@ main {
             <div class="row">
                 <#include("www/gen/results_list.html")>
             </div>
+
+            <#pagination(get("page"), get("npages"), cat("/results/", get("id"),"/{}"), 3)>
         </div>
     </main>
 
-    <#include("www/gen/footer.html")>-->
+
+
+
+
+    <#include("www/gen/footer.html")>
     <script type="text/javascript" src="/js/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="text/javascript" src="/js/index.js"></script>

@@ -15,7 +15,6 @@ class InstructionsLoader:
     def load(self):
         filename = inspect.getframeinfo(inspect.currentframe()).filename
         path = os.path.join(os.path.dirname(os.path.abspath(filename)), "instructions/")
-        print("Here", InstructionsLoader.PARENT_PACKAGE)
         for x in os.listdir(path):
             file=os.path.join(path, x)
             if x[0]!="_" and (x[-3:].lower()==".py" or x[-4:].lower()==".pyc"):

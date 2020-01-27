@@ -107,7 +107,7 @@ def html_gen(filename, data):
     content=x.gen(data)
     out = html_template_string(content,data)
     t= "%.3f ms" % ((time.time()-t)*1000)
-    log.info("html_gen('"+filename+"') : ", t)
+    #log.debug("html_gen('"+filename+"') : ", t)
     return out
 
 def html_gen_fd(fd, data):

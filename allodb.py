@@ -1,3 +1,4 @@
+from resultset import ResultSet
 import json
 import os
 import sys
@@ -10,7 +11,7 @@ import user
 import alloexpr
 import requests
 
-import utils
+import alloimport
 from alloexpr import Expr
 from allolexer import Lexer
 from io import StringIO
@@ -252,7 +253,7 @@ class DbHeader:
         elif array:
             self.heads=array
 
-        self.allheader=self.heads+self.userdata.heads()
+        self.allheader=self.heads+(self.userdata.heads() if self.userdata else [])
         self.index={}
         for i in range(len(self.heads)):
             self.index[self.heads[i]]=i
@@ -313,8 +314,6 @@ class DbRow:
                 self.userdata.put(self.data[0], array[x:])
 
         if len(self.header.heads)!=len(self.data):
-            print(len(self.header.heads), self.header.heads)
-            print(len(self.data), self.data)
             raise Exception("Bad number of columns")
         self.id=self.data[0]
 
@@ -345,22 +344,6 @@ class DbRow:
             return strout
         else: return str(self)
 
-    @staticmethod
-    def sortkey( a, b, key, coef):
-        a=a[key]
-        b=b[key]
-        if a!=None and b!=None:
-            if isinstance(a, str):
-                a=a.lower()
-                b=b.lower
-            if a==b: return 0
-            return -1*coef if ( a<b ) else 1*coef
-        if a: return 1*coef
-        elif b: return -1*coef
-        return 0
-
-    def _html_to_json(self, content):
-        pass
 
     def add_from_json(self, js):
         arr=[]
@@ -410,20 +393,21 @@ class DbRow:
 
 class DB:
     COLUMNS=[
-                           ("id", None, None, "id"),
-                           ("name", None, None, "name"),
-                           ("image/url", None, None, "image"),
-                           ("pays/*", utils.castarr, None, "nationality"),
-                           ("annee",  None, None, "year"),
-                           ("genre/*", utils.castarr, None, "genre"),
-                           ("description",  None, None, "description"),
-                           ("director/*/name", None, None, "director"),
-                           ("actor/*/name", utils.castarr, None, "actor"),
-                           ("creator/*/name", utils.castarr, None, "creator"),
-                           ("musicBy/*/name", utils.castarr, None, "musicBy"),
-                           ("aggregateRating/ratingValue", utils.floatvirg, None, "note"),
-                           ("aggregateRating/ratingCount", int, None, "nnote"),
-                           ("aggregateRating/reviewCount", int, None, "nreview")
+                           ("id", None, -1, "id"),
+                           ("name", None, "", "name"),
+                           ("image/url", None, "", "image"),
+                           ("pays/*", alloimport.castpays, [], "nationality"),
+                           ("annee",  None, 0, "year"),
+                           ("duration",  alloimport.castduration, 0, "duration"),
+                           ("genre/*", alloimport.castarr, [], "genre"),
+                           ("description",  None, "", "description"),
+                           ("director/*/name", None, [], "director"),
+                           ("actor/*/name", alloimport.castarr, [], "actor"),
+                           ("creator/*/name", alloimport.castarr, [], "creator"),
+                           ("musicBy/*/name", alloimport.castarr, [], "musicBy"),
+                           ("aggregateRating/ratingValue", alloimport.floatvirg, 0, "note"),
+                           ("aggregateRating/ratingCount", int, 0, "nnote"),
+                           ("aggregateRating/reviewCount", int, 0, "nreview")
                        ]
 
     @staticmethod
@@ -432,31 +416,20 @@ class DB:
         for x in DB.COLUMNS: out.append(x[3])
         return out
 
-    def __init__(self, root, file=None, userdata=None, col=[], order=[]):
-        self.root=root
+    def __init__(self, root, file=None, userdata=None):
         self.file=file
         self.header=None
         self.needsave=False
         self.userdata=userdata
+        self.last_id=0
         self.data=[]
-        self.columns=col
         self.ids={}
         self.actors={}
         self.directors={}
         self.pays={}
-        self.order=order
         self.time=time.time()
-        if file:
-            with open(file, "r") as f:
-                self.header=DbHeader(self, userdata, line=f.readline())
-                line=f.readline()
-                while line!="":
-                    self.data.append(DbRow(self.header,line=line))
-                    line=f.readline()
-                self.time = time.time() - self.time
-                #print("line -> ", line)
-        else:
-            self.header=DbHeader(self, userdata, array=DB.COLUMNS_NAME())
+        self.header=DbHeader(self, userdata, array=DB.COLUMNS_NAME())
+
         if root:
             self.ids=root.ids
             self.actors=root.actors
@@ -464,15 +437,20 @@ class DB:
     def function(self, name, args):
         return allofunction.call(self, name, args)
 
-    def moustache(self):
-        arr=[]
-        for x in self.data:
-            arr.append(x.json(self.columns))
-        return {
-            "count" : len(self.data),
-            "time" : int(self.time*1000)/1000,
-            "data" : arr
-        }
+    def row_from_id(self, id):
+        rs = ResultSet(self)
+        rs.put(self.ids[id] if (id in self.ids) else [])
+        return rs.close()
+
+    def row_from_actor(self, act):
+        return  ResultSet(self, set=self.actors[act] if (act in self.actors) else []).close()
+
+    def row_from_director(self, dir):
+        return  ResultSet(self, set=self.directors[dir] if (dir in self.directors) else []).close()
+
+    def row_from_nationality(self, pays):
+        return  ResultSet(self, set=self.pays[pays] if (pays in self.pays) else []).close()
+
 
     def list_pays(self):
         out=[]
@@ -486,21 +464,23 @@ class DB:
         return out
 
     def __str__(self):
+        head=self.header.allheader()
         out=str(self.length())+" résultats en "+str( int(self.time*1000000)/1000)+" ms\n"
-        out+=str(self.header.format(self.columns))+"\n"
+        out+=str(self.header.format(head))+"\n"
         for x in self.data:
-            out+=x.format(self.columns)+"\n"
+            out+=x.format(head)+"\n"
         return out
 
     def __repr__(self): return self.__str__()
 
     def length(self): return len(self.data)
 
-    def _root(self): return self.root._root() if self.root else self
 
     def append(self, row):
+        if isinstance(row, (list, tuple)): row=DbRow(self.header, None, array=row)
         self.data.append(row)
-        self.ids[row.resolve("id")]=row
+        id=row.resolve("id")
+        self.ids[id]=row
         actors=row.resolve("actor")
         if actors:
             for actor in actors:
@@ -519,22 +499,20 @@ class DB:
                 pay=pay.lower()
                 if not pay in self.pays: self.pays[pay]=[]
                 self.pays[pay].append(row)
-
+        if id>self.last_id: self.last_id=id
 
     def put(self, expr):
         array=expr.val(self)
         self.data.append(DbRow(self.header, self.userdata, array=array))
-        if self.root==None: self.needsave=True
+        self.needsave=True
         return True
 
     def commit(self):
-        if self.root: return self.root.commit()
-        else:
-            if self.needsave:
-                self.save(self.file)
-            if self.userdata.changed():
-                self.userdata.save()
-            self.needsave=False
+        if self.needsave:
+            self.save(self.file)
+        if self.userdata.changed():
+            self.userdata.save()
+        self.needsave=False
 
     def set(self, affs, expr):
         rows=self.match(expr)
@@ -558,10 +536,7 @@ class DB:
         return expr.val(self)
 
     def emptyset(self):
-        out = None
-        out = DB(self._root(), userdata=self.userdata)
-        out.header = self.header
-        return out
+        return ResultSet(self)
 
     def row_at(self, n):
         return self.data[n]
@@ -569,44 +544,21 @@ class DB:
     def match(self, expr):
         out=None
         if isinstance(expr, alloexpr.SelectExpr):
-            out=DB(self._root(), userdata=self.userdata, col=expr.select, order=expr.order)
+            out=ResultSet(self, col=expr.select, order=expr.order)
         else:
-            out=DB(self._root(), userdata=self.userdata)
-        out.header=self.header
-        i=0
+            out=ResultSet(self)
+
         for row in self.data:
-            try:
-                if expr.val(row):
-                    out.data.append(row)
-            except TypeError:
-                pass
-            i+=1
-        if len(out.order)>0:
-            key, sens = out.order[0]
-            out.data=sorted(out.data, key=cmp_to_key(lambda a,b: DbRow.sortkey(a,b, key, 1 if sens else -1) ))
-        out.time = time.time() - out.time
+            if expr.val(row):
+                out.put(row)
+
+        out.close()
 
         return out
 
     def __len__(self):
         return len(self.data)
 
-    def list_personnes(self, field="actor"):
-        out = {}
-        arr = []
-        for row in self.data:
-            names = row.resolve(field)
-            if names:
-                for name in names:
-                    name = name.lower()
-                    if not name in out:
-                        out[name] = (1, [row.resolve("id")])
-                    else:
-                        out[name] += (out[name][0] + 1, out[name][1] + [row.resolve("id")])
-        for x in out:
-            arr.append((x, out[x]))
-        arr = sorted(arr, key=lambda x: x[1][0], reverse=True)
-        return arr
 
     def list_array_field_value(self, field):
         out={}
@@ -635,7 +587,7 @@ class DB:
         return db
 
     def addfromhtml(self, content):
-        self.data.append(DbRow(self.header, userdata=self.userdata, array=utils.extract(content, DB.COLUMNS)))
+        self.data.append(DbRow(self.header, userdata=self.userdata, array=alloimport.extract(content, DB.COLUMNS)))
 
     def tojson(self):
         rows=[]
@@ -646,7 +598,8 @@ class DB:
             "columns" : self.header.heads,
             "results": len(self.data),
             "order" : self.order,
-            "data" :  rows
+            "data" :  rows,
+            "last_id" : self.last_id
         }
 
     def save(self, file):
@@ -654,24 +607,16 @@ class DB:
             f.write(json.dumps(self.tojson()))
 
 
-    def bons_film(self, n=1, annees=None, genres=None):
-        base='select * where (note in range(3.5,5)) '
-        if annees:
-            base+=" and ("
-            if isinstance(annees, int): base+="year="+str(annees)
-            else: base+="year in range("+str(annees[0])+","+str(annees[1])+")"
-            base+=")"
-        if annees:
-            base+=" and ("
-            if isinstance(annees, str): base+=' ("'+genres+'" in genre)'
-            else:
-                for i in range(len(genres)):
-                    genre=genres[i]
-                    base += (" or " if i>0 else "")+' ("' + genre + '" in genre)'
-            base+=")"
-        base+=" order by note desc"
-        print(base)
-        return self.execute(base)
+    def extract_html_dir(self, dir):
+        n=0
+        MAX=1382
+        for x in os.listdir(dir):
+            if n%MAX==0: print(int(n/MAX), " % : ", len(self.data))
+            p=os.path.join(dir, x)
+            with open(p, "r") as f:
+                self.append(alloimport.extract(f.read(), DB.COLUMNS))
+            n+=1
+
 
 def printreq(adb, req):
     res=adb.execute(req)
@@ -711,3 +656,11 @@ def ____():
             print(res)
         except:
             traceback.print_exc()
+
+def createdb():
+    db=DB(None)
+    db.extract_html_dir("/home/fanch/allocine/allocine/")
+    db.save("db.json")
+
+if __name__=="__main__":
+    createdb()

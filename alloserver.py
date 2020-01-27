@@ -1,5 +1,7 @@
 import json
 import os
+import time
+import uuid
 from urllib.parse import unquote_plus
 import config
 from allodb import DB
@@ -88,25 +90,45 @@ def json_to_request(x):
 
     return base
 
+class Request:
+    def __init__(self, result):
+        self.id=result.id
+        self.result=result
+        self.time=time.time()
+
+
 class AlloServer(RESTServer):
 
     def __init__(self):
         RESTServer.__init__(self)
+        self.requests={}
         self.user = user.User.createuser("Test")
         self.db = DB.fromjson("db.json", self.user)
+        self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
+        self.route("GET", "/results/#id/#page", self.handle_results)
         self.route("POST", "/results", self.handle_results)
         self.static_gen("/", config.WWW_DIR)
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
-        body=req.body_json()
-
-        if "json" in body:
-            request=json_to_request(json.loads(body["json"]))
-        elif "text" in body:
-            request="(select * where "+unquote_plus(body["text"])+" )"
-        x=self.db.execute(request).moustache()
-        res.serve_file_gen(path, x)
+        request = ""
+        if req.method=="POST":
+            body=req.body_json()
+            if "json" in body:
+                request=json_to_request(json.loads(body["json"]))
+            elif "text" in body:
+                request="(select * where "+unquote_plus(body["text"])+" )"
+            tmp=Request(self.db.execute(request))
+            x=tmp.result
+            x.pagesize=10
+            self.requests[x.id]=tmp
+        else:
+            if "id" in req.params and "page" in req.params and req.params["id"] in self.requests:
+                x=self.requests[req.params["id"]].result
+                x.page=int(req.params["page"])-1
+            else:
+                return res.serve400()
+        res.serve_file_gen(path, x.moustache())
 
 filecache.init()
 

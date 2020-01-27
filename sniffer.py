@@ -42,7 +42,6 @@ def allofilter(content, id):
                     if x: js["pays"].append(x)
                     x = filter_date(line)
                     if x: js["annee"] = x
-                print(js["pays"], js["annee"])
 
     return js
 
