@@ -90,3 +90,28 @@ def inst_desktop(args, data):
 
 def inst_json(args, data):
     return json.dumps(args[0])
+
+def inst_replace(args, data):
+    return args[0].replace(args[1], args[2])
+
+def inst_add(args, data):
+    acc=0
+    for x in args:
+        x+=int(x)
+    return x
+
+def inst_lower(args, data):
+    return args[0].lower()
+
+
+def inst_minToStr(args, data):
+    n=args[0]
+    out=""
+    h=int(n/60)
+    m=str(n%60)
+    if len(m)==1: m="0"+m
+    if h>0: return str(h)+"h"+m
+    else: return m+" minutes"
+
+def inst_jsbool(args, data):
+    return "true" if args[0] else "false"

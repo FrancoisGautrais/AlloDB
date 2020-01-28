@@ -8,7 +8,7 @@ with open("config.cfg") as f:
     exec(f.read())
 
 
-def user(x): return os.path.join(USER_DIR, x, ".json")
+def user(x): return os.path.join(USER_DIR, x+".json")
 
 
 def www(x):

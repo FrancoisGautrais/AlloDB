@@ -124,9 +124,7 @@
         }
 
         function send_request(){
-        alert("ok")
             $("#root-widget").find('[id^=widget-]').each(function(a,b){ add_widget_val($(b)) } )
-            alert(JSON.stringify(postjson, null, 2))
             $('body').append($('<form/>')
               .attr({'action': "results", 'method': 'post', 'id': 'replacer'})
               .append($('<input/>')

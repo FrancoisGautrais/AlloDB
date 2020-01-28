@@ -20,21 +20,21 @@ def default(js, key, fct=None, default=None):
 def json_to_request(x):
     l=[]
     # 1 match
-    if x["match"]!=None: l.append('"'+x["match"]+'" in name ')
+    if x["match"]!=None: l.append('"'+unquote_plus(x["match"])+'" in name ')
 
     # 2/3 pays
     if x["pays"]!=None and x["pays-op"]!=None:
         tmp="("
         arr=x["pays"]
         for i in range(len(arr)):
-            tmp+=(x["pays-op"] if i>0 else "")+' "'+arr[i]+'" in nationality '
+            tmp+=(x["pays-op"] if i>0 else "")+' "'+unquote_plus(arr[i])+'" in nationality '
         l.append(tmp+")")
     #4/5 genre
     if x["genre"] != None and x["genre-op"] != None:
         tmp = "("
         arr = x["genre"]
         for i in range(len(arr)):
-            tmp += (x["genre-op"] if i > 0 else "") + ' "' + arr[i] + '" in genre '
+            tmp += (x["genre-op"] if i > 0 else "") + ' "' + unquote_plus(arr[i]) + '" in genre '
         l.append(tmp + ")")
 
     # 6 / 7 annee
@@ -64,11 +64,10 @@ def json_to_request(x):
     elif x["duration-max"]!=None: l.append(' duration <= '+str(x["duration-max"])+" ")
 
     #17
-    if x["actor"]!=None: l.append('"'+x["actor"]+'" in actor ')
+    if x["actor"]!=None: l.append('"'+unquote_plus(x["actor"])+'" in actor ')
 
     #18
-    if x["director"]!=None: l.append('"'+x["director"]+'" in director ')
-
+    if x["director"]!=None: l.append('"'+unquote_plus(x["director"])+'" in director ')
 
     #19
     if x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True")
@@ -79,8 +78,11 @@ def json_to_request(x):
     base = "select * where ("
     for i in range(len(l)):
         base+=("and" if i>0 else "")+l[i]
-
+    if len(l)==0: base+="True"
     base+=") "
+
+
+
     if x["order"]!=None and x["order-sort"]!=None:
         base+=" order by "+ x["order"]+" "
         if x["order-sort"]=="desc": base+="desc "
@@ -88,6 +90,8 @@ def json_to_request(x):
     if x["rand"]!=None and x["rand"]>0:
         base="rand("+base+", "+str(x["rand"])+" ) "
 
+
+    log.info("Request = ", base)
     return base
 
 class Request:
@@ -98,16 +102,75 @@ class Request:
 
 
 class AlloServer(RESTServer):
-
+    RESULT_PER_PAGE=10
     def __init__(self):
         RESTServer.__init__(self)
         self.requests={}
         self.user = user.User.createuser("Test")
         self.db = DB.fromjson("db.json", self.user)
         self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
+        self.route("GET", "/director/#id", self.handle_director)
+        self.route("GET", "/actor/#id", self.handle_actor)
+        self.route("GET", "/film/#id", self.handle_film)
+        self.route("POST", "/film/#id", self.handle_film_modify)
         self.route("GET", "/results/#id/#page", self.handle_results)
         self.route("POST", "/results", self.handle_results)
         self.static_gen("/", config.WWW_DIR)
+
+    def _check_query(self, req, query):
+        if "type" in req.query:
+            type=req.query["type"]
+            order=req.query["order"] if "order" in req.query else ""
+            query.sort(type, order!="desc")
+
+    def handle_director(self, req: HTTPRequest, res: HTTPResponse):
+        id=req.params["id"].replace("+", " ")
+        if not id in self.db.directors: return res.serve404()
+        path = config.www("results.html")
+        tmp = Request(self.db.row_from_director(id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        self.requests[x.id] = tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache())
+
+
+    def handle_actor(self, req: HTTPRequest, res: HTTPResponse):
+        id=req.params["id"].replace("+", " ")
+        if not id in self.db.actors: return res.serve404()
+        path = config.www("results.html")
+        tmp = Request(self.db.row_from_actor(id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        self.requests[x.id] = tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache())
+
+
+    def handle_film(self, req: HTTPRequest, res: HTTPResponse):
+        id=int(req.params["id"])
+        if not id in self.db.ids: return res.serve404()
+        path = config.www("film.html")
+        tmp = Request(self.db.row_from_id(id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        self.requests[x.id] = tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache())
+
+    def handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
+        id=int(req.params["id"])
+        if not id in self.db.ids: return res.serve404()
+        js = req.body_json()
+        if not js: return res.serve400()
+
+        row = self.db.ids[id]
+        out=[]
+        for x in js:
+            out.append((x, js[x]))
+
+        row.set(out)
+
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
@@ -120,7 +183,7 @@ class AlloServer(RESTServer):
                 request="(select * where "+unquote_plus(body["text"])+" )"
             tmp=Request(self.db.execute(request))
             x=tmp.result
-            x.pagesize=10
+            x.pagesize = AlloServer.RESULT_PER_PAGE
             self.requests[x.id]=tmp
         else:
             if "id" in req.params and "page" in req.params and req.params["id"] in self.requests:
@@ -128,6 +191,8 @@ class AlloServer(RESTServer):
                 x.page=int(req.params["page"])-1
             else:
                 return res.serve400()
+
+        self._check_query(req, x)
         res.serve_file_gen(path, x.moustache())
 
 filecache.init()

@@ -35,20 +35,20 @@
 <ul class="collection sortable" data-name="{{name}}">
 
     <li class="collection-item custom-list" >
-        <a href="film/{{id}}">
+        <a href="/film/{{id}}">
             <span class="custom-list-item-icon">
                 <img src="{{image}}" height="150px">
             </span>
         </a>
         <span class="custom-list-item second-line">
-            <a href="film/{{id}}">
+            <a href="/film/{{id}}">
                 <div class="title-filename color-5">{{name}}</div>
             </a>
             <div class="subtitle-filename color-5">
-                <p> {{year}}<br>
-                    De {{#director}} {{.}}&nbsp;  {{/director}}<br>
+                <p> Sorti en {{year}}, <#minToStr({{duration}})><br>
+                    De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
                     {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
-                    {{#nationality}}{{.}} &nbsp;  {{/nationality}}<br>
+                    {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                     {{note}}/5 (parmi {{nnote}})</p>
             </div>
         </span>

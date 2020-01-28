@@ -1,10 +1,143 @@
-<!DOCTYPE html>
-<html lang="en">
+{{#data}}
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Film : {{name}}</title>
 
+</head>
+
+<style>
+main {
+    padding-top: 0px ! important;
+}
+
+.container {
+    margin-top: 15px;
+}
+
+.inline-cb > label > span {
+    margin-top: 20px;
+}
+</style>
+
+<body>
+    <#include("www/gen/header.html")>
+    <div class="const" id="CONST_PATH">{{path}}</div>
+    <#include("www/gen/overlay.html")>
+
+
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="row col s12 offset-m4 m4">
+                    <div class="center-align color-5">
+                        <img src="{{image}}" height="300px"/>
+                        <h1>{{name}}</h1>
+                        <p> Sorti en {{year}}, <#minToStr({{duration}})><br>
+                        De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
+                        {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
+                        {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
+                        Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}}<br>
+                        {{note}}/5 (parmi {{nnote}}) {{nreview}} critiques</p>
+                        <h3>Synopsis</h3>
+                        <p>{{description}}</p>
+                        <div class="row">
+
+                            <span class="input-field inline-cb col s4">
+                                <label>
+                                    <input type="checkbox"  id="cb_seen"/>
+                                    <span>Vu</span>
+                                </label>
+                            </span>
+                            <span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                            <span class="input-field inline-cb col s4">
+                                <label>
+                                    <input type="checkbox" id="cb_to_see"/>
+                                    <span>À (re)voir</span>
+                                </label>
+                            </span>
+                            <span class="input-field col s4">
+                                <input id="t_note" type="number" pattern="[0-9]+([\.,][0-9]+)?" step="0.1" class="validate">
+                                <label for="t_note">Note / 5</label>
+                            </span>
+
+                        </div>
+                        <div class="input-field col s12">
+                            <textarea id="ta_comment" class="materialize-textarea"></textarea>
+                            <label for="ta_comment">Avis personnel</label>
+                        </div>
+                        <a onclick="save_desc()" class="btn fond-color-2 color-4">Enregistrer</a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </main>
+
+
+
+
+
+    <#include("www/gen/footer.html")>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/index.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+
+    <script>
+    var FILM_ID={{id}}
+    function _change_value(data){
+        $.ajax({
+            type: "POST",
+            url: "/film/"+FILM_ID+"",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(data){ M.toast({html: 'Valeur modifiée'}) },
+            error: function(data, err){ M.toast({html: 'Erreur : '+err}) }
+        });
+    }
+
+    function seen_changed(state){
+        _change_value({ seen : state })
+    }
+
+    function to_see_changed(state){
+        _change_value({ tosee : state })
+    }
+
+    function ownnote_change(n){
+
+        _change_value({ ownnote : n })
+    }
+
+    function save_desc(){
+        var text = $("#ta_comment").val()
+        alert($("#t_note").val())
+        alert(parseFloat($("#t_note").val()) )
+        _change_value({ comment : text, ownnote: parseFloat($("#t_note").val()) })
+    }
+
+    $( document ).ready(function(){
+        $("#cb_seen").prop("checked", <#jsbool({{seen}})>)
+        $("#cb_to_see").prop("checked", <#jsbool({{tosee}})>)
+        $("#t_note").val("{{#ownnote}}{{ownnote}}{{/ownnote}}")
+        $("#ta_comment").val({{#comment}}"{{comment}}"{{/comment}}{{^comment}}""{{/comment}})
+
+        $("#cb_seen").change(function(a){ seen_changed($(a.currentTarget).is(':checked')) })
+        $("#cb_to_see").change(function(a){ to_see_changed($(a.currentTarget).is(':checked')) })
+        $("#t_note").change(function(a){ ownnote_change(parseFloat($("#t_note").val())) })
+
+
+    });
+
+
+    </script>
 </body>
+
 </html>
+{{/data}}

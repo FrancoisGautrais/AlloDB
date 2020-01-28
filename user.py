@@ -60,7 +60,9 @@ class User:
 
     def set(self, id, k, v):
         if not (id in self.db): self.db[id]=emptyrow()
-        if k in self.db[id]: self.db[id][k] = v
+        if k in self.db[id]:
+            self.db[id][k] = v
+            self.save()
         else: raise Exception(k+" not a user header")
 
     def save(self):

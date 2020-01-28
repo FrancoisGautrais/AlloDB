@@ -11,9 +11,12 @@ def sortkey(a, b, key, coef):
     if a != None and b != None:
         if isinstance(a, str):
             a = a.lower()
-            b = b.lower
+            b = b.lower()
         if a == b: return 0
-        return -1 * coef if (a < b) else 1 * coef
+        try:
+            return -1 * coef if (a < b) else 1 * coef
+        except:
+            y=1
     if a:
         return 1 * coef
     elif b:
@@ -39,6 +42,7 @@ class ResultSet:
         arr=[]
         for x in self.data:
             arr.append(x.json(self.columns))
+
         return {
             "count" : len(self.data),
             "time" : int(self.process_time*1000)/1000,
@@ -46,7 +50,8 @@ class ResultSet:
             "page" : self.page,
             "nperpage" : self.pagesize,
             "id" : self.id,
-            "npages" : 1 if self.pagesize<=0 else (int(len(self.data)/self.pagesize)+ (1 if len(self.data)%self.pagesize>0 else 0))
+            "npages" : 1 if self.pagesize<=0 else (int(len(self.data)/self.pagesize)+ (1 if len(self.data)%self.pagesize>0 else 0)),
+            "payslist" : alloimport.ID_TO_PAYS
         }
 
     def close(self):
@@ -55,6 +60,10 @@ class ResultSet:
             self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if sens else -1)))
         self.process_time = time.time() - self.start_time
         return self
+
+
+    def sort(self, key, reverse):
+        self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if reverse else -1)))
 
     def put(self, row):
         if isinstance(row, (list, tuple)):

@@ -3,6 +3,8 @@ class Lexer:
     NONE="none"
     STRING="string"
     IDENT="ident"
+    NONE="None"
+    BOOL="bool"
     INT="int"
     FLOAT="float"
     P_OUVRANTE="("
@@ -51,8 +53,15 @@ class Lexer:
         while self.cis(Lexer.IDENT_AFTER) and self.c!="":
             self.string+=self.c
             self.read()
-        self.value=self.string
-        self.current=Lexer.IDENT
+        if self.string=="None":
+            self.value=None
+            self.current=Lexer.NONE
+        elif self.string.lower()=="true" or self.string.lower()=="false":
+            self.value=self.string.lower()=="true"
+            self.current=Lexer.BOOL
+        else:
+            self.value=self.string
+            self.current=Lexer.IDENT
 
     def _read_numbers(self):
         self.string=self.c

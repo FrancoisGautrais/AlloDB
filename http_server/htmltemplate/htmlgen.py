@@ -1,3 +1,5 @@
+from io import StringIO
+
 from .. import log
 from ..filecache import filecache
 from ..utils import html_template_string
@@ -39,7 +41,7 @@ class Instruction:
 
 
     def _next_value(self):
-        if self.lex.current in [Lexer.INT, Lexer.FLOAT, Lexer.STRING]:
+        if self.lex.current in [Lexer.INT, Lexer.FLOAT, Lexer.STRING, Lexer.NONE, Lexer.BOOL]:
             self.args.append(self.lex.value)
             self.lex.next()
         elif self.lex.current==Lexer.IDENT:
@@ -60,7 +62,8 @@ class HtmlGen:
 
     def __init__(self, filename=None, isFile=True, fd=None, encoding="utf-8"):
         self.filename=filename
-        self.fd=filecache.open(filename, "r", encoding=encoding) if filename else fd
+        self.fd=None
+        self.rawtext=(filecache.open(filename, "r", encoding=encoding) if filename else fd).read()
         self.text=""
         self.c=""
 
@@ -94,6 +97,7 @@ class HtmlGen:
         return False
 
     def gen(self, data):
+        self.fd=StringIO(html_template_string(self.rawtext, data))
         x=True
         while x:
             x=self._replace_next(data)
@@ -104,8 +108,7 @@ class HtmlGen:
 def html_gen(filename, data):
     t=time.time()
     x = HtmlGen(filename=filename)
-    content=x.gen(data)
-    out = html_template_string(content,data)
+    out=x.gen(data)
     t= "%.3f ms" % ((time.time()-t)*1000)
     #log.debug("html_gen('"+filename+"') : ", t)
     return out
@@ -113,4 +116,4 @@ def html_gen(filename, data):
 def html_gen_fd(fd, data):
     x = HtmlGen(fd=fd)
     content=x.gen(data)
-    return html_template_string(content,data)
+    return content
