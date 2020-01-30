@@ -26,6 +26,7 @@ main {
 </style>
 
 <body>
+
     <#include("www/gen/header.html")>
     <div class="const" id="CONST_PATH">{{path}}</div>
     <#include("www/gen/overlay.html")>
@@ -84,10 +85,6 @@ main {
 
 
     <#include("www/gen/footer.html")>
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/materialize.min.js"></script>
-    <script type="text/javascript" src="/js/index.js"></script>
-    <script type="text/javascript" src="/js/init.js"></script>
 
     <script>
     var FILM_ID={{id}}
@@ -117,8 +114,6 @@ main {
 
     function save_desc(){
         var text = $("#ta_comment").val()
-        alert($("#t_note").val())
-        alert(parseFloat($("#t_note").val()) )
         _change_value({ comment : text, ownnote: parseFloat($("#t_note").val()) })
     }
 
@@ -126,7 +121,8 @@ main {
         $("#cb_seen").prop("checked", <#jsbool({{seen}})>)
         $("#cb_to_see").prop("checked", <#jsbool({{tosee}})>)
         $("#t_note").val("{{#ownnote}}{{ownnote}}{{/ownnote}}")
-        $("#ta_comment").val({{#comment}}"{{comment}}"{{/comment}}{{^comment}}""{{/comment}})
+        $("#ta_comment").val({{#comment}}"<#escape("{{comment}}")>"{{/comment}}{{^comment}}""{{/comment}}.split("\\n").join("\n"))
+        M.textareaAutoResize($('#ta_comment'));
 
         $("#cb_seen").change(function(a){ seen_changed($(a.currentTarget).is(':checked')) })
         $("#cb_to_see").change(function(a){ to_see_changed($(a.currentTarget).is(':checked')) })

@@ -51,8 +51,23 @@ function on_send_sort()
         url='/results/<#get("id")>/<#add(get("page"),1)>?'+query
         window.location.href=url
     }
-
 }
+
+$(document).ready(function(){
+    $("#form_sort_type").find("input").change(function(){
+        modalClose("sort_type")
+        if( $("input:radio[name ='group1']:checked").length==0) lbl="Trier par"
+        else lbl=$("[data-value="+ $("input:radio[name ='group1']:checked").data("value")+"]").parent().find("span").text()
+        $("#button_sort_type").text(lbl)
+    })
+
+    $("#form_sort_order").find("input").change(function(){
+        modalClose("sort_order")
+        lbl=$("[data-value='"+ $("input:radio[name ='group2']:checked").data("value")+"']").parent().find("span").text()
+        $("#button_sort_order").text(lbl)
+     })
+})
+
 </script>
 
 <nav class="adress-bar fond-color-1 color-4">
@@ -62,10 +77,10 @@ function on_send_sort()
             <div class="autoreplace" data-type="menupath" data-value="{{path}}"></div>
         </ul>
         Trier par
-        <a class="waves-effect waves-light btn" onclick="modal('sort_type')">Trier par</a>
+        <a class="waves-effect waves-light btn fond-color-2" id="button_sort_type" onclick="modal('sort_type')">Trier par</a>
         Ordre
-        <a class="waves-effect waves-light btn" onclick="modal('sort_order')">Croissant</a>
-        <a class="waves-effect waves-light btn" onclick="on_send_sort()">Trier</a>
+        <a class="waves-effect waves-light btn fond-color-2"  id="button_sort_order" onclick="modal('sort_order')">Croissant</a>
+        <a class="waves-effect waves-light btn fond-color-3" onclick="on_send_sort()">Trier</a>
     </span>
 </nav>
 
@@ -75,7 +90,7 @@ function on_send_sort()
         <center><span class="card-title" >Trier par</span></center>
     </div>
     <div class="card-action row">
-       <form action="#">
+       <form action="#" id="form_sort_type">
             <p>
                 <label>
                     <input name="group1" type="radio" data-value="note" />
@@ -112,9 +127,14 @@ function on_send_sort()
                     <span># critiques</span>
                 </label>
             </p>
+            <p>
+                <label>
+                    <input name="group1" type="radio" data-value="ownnote" />
+                    <span>Note personnelle</span>
+                </label>
+            </p>
 
         </form>
-        <a class="btn fond-color-2 color-4 col offset-s3 s6" onclick="modalClose('sort_type')">Ok</a>
     </div>
 </div>
 
@@ -124,7 +144,7 @@ function on_send_sort()
         <center><span class="card-title" >Trier par</span></center>
     </div>
     <div class="card-action row">
-       <form action="#">
+       <form action="#" id="form_sort_order">
             <p>
                 <label>
                     <input name="group2" type="radio" data-value="" checked/>
@@ -138,7 +158,6 @@ function on_send_sort()
                 </label>
             </p>
         </form>
-        <a class="btn fond-color-2 color-4 col offset-s3 s6" onclick="modalClose('sort_order')">Ok</a>
     </div>
 </div>
 

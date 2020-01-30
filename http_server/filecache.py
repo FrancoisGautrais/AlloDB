@@ -14,6 +14,10 @@ if not _mime_lock:
     _mime_lock=Lock()
 
 def _mime(path):
+    p=path.lower()
+    if p.endswith(".html"): return "text/html"
+    if p.endswith(".css"): return "text/css"
+    if p.endswith(".js"): return "text/javascript"
     try:
         _mime_lock.acquire()
         x=magic.detect_from_filename(path)

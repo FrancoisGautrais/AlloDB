@@ -103,19 +103,20 @@ class Request:
 
 class AlloServer(RESTServer):
     RESULT_PER_PAGE=10
-    def __init__(self):
+    def __init__(self, user):
         RESTServer.__init__(self)
         self.requests={}
-        self.user = user.User.createuser("Test")
+        self.user = user
         self.db = DB.fromjson("db.json", self.user)
         self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
+        self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html")))
         self.route("GET", "/director/#id", self.handle_director)
         self.route("GET", "/actor/#id", self.handle_actor)
         self.route("GET", "/film/#id", self.handle_film)
         self.route("POST", "/film/#id", self.handle_film_modify)
         self.route("GET", "/results/#id/#page", self.handle_results)
         self.route("POST", "/results", self.handle_results)
-        self.static_gen("/", config.WWW_DIR)
+        self.static("/", config.WWW_DIR)
 
     def _check_query(self, req, query):
         if "type" in req.query:
@@ -196,6 +197,12 @@ class AlloServer(RESTServer):
         res.serve_file_gen(path, x.moustache())
 
 filecache.init()
+usr = None
+try :
+    usr = user.User.fromjsonfile("fanch")
+except:
+    usr= user.User.createuser("fanch")
 
-als = AlloServer()
+
+als = AlloServer(usr)
 als.listen(8080)

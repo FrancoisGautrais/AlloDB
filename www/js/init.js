@@ -12,6 +12,8 @@ function modal(s, fct=null, args=null)
     }
 }
 
+
+
 function modalClose(s, fct=null, args=null)
 {
     obj = MODALS[s]

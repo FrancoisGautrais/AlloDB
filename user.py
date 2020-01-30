@@ -54,6 +54,7 @@ class User:
         return self.db[item]
 
     def resolve(self, id, item):
+        if isinstance(id, int): id=str(id)
         if id in self.db and item in self.db[id]:
             return self.db[id][item]
         return None
@@ -71,10 +72,16 @@ class User:
             f.write(self.json())
             self.change=False
 
-
-
     @staticmethod
     def createuser(name): return User(name=name)
 
     @staticmethod
-    def fromjson(js): return User(json=js)
+    def fromjson(js): return User(js=js)
+
+
+    @staticmethod
+    def fromjsonfile(file):
+        file = config.user(file)
+        with open(file) as f:
+            usr = User(js=json.loads(f.read()))
+        return usr

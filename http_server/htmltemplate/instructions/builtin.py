@@ -40,6 +40,8 @@ def inst_objl(args, data):
         i+=2
     return out
 
+def inst_escape(args, data):
+    return args[0].replace("\n", "\\n")
 
 def inst_None(args, data): return None
 
@@ -97,8 +99,8 @@ def inst_replace(args, data):
 def inst_add(args, data):
     acc=0
     for x in args:
-        x+=int(x)
-    return x
+        acc+=int(x)
+    return acc
 
 def inst_lower(args, data):
     return args[0].lower()
