@@ -107,63 +107,93 @@ class EqExpr(BinaryExpr):
     def val(self, dico):
         f=self.first.val(dico)
         s=self.second.val(dico)
-        return (f.lower()==s.lower()) if isinstance(f, str) else f==s
+        try: return (f.lower()==s.lower()) if isinstance(f, str) else f==s
+        except: return False
+
 
 class LtExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "<")
-    def val(self, dico): return self.first.val(dico) < self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) < self.second.val(dico)
+        except: return False
 
 class GtExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, ">")
-    def val(self, dico): return self.first.val(dico) > self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) > self.second.val(dico)
+        except: return False
 
 class LeExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "<=")
-    def val(self, dico): return self.first.val(dico)<=self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico)<=self.second.val(dico)
+        except: return False
 
 class GeExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, ">=")
-    def val(self, dico): return self.first.val(dico)>=self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico)>=self.second.val(dico)
+        except: return False
 
 class NeExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "!=")
-    def val(self, dico): return self.first.val(dico)!=self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico)!=self.second.val(dico)
+        except: return False
 
 class AddExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "+")
-    def val(self, dico): return self.first.val(dico) + self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) + self.second.val(dico)
+        except: return False
 
 class SubExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "-")
-    def val(self, dico): return self.first.val(dico) - self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) - self.second.val(dico)
+        except: return False
 
 class MultExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "*")
-    def val(self, dico): return self.first.val(dico) * self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) * self.second.val(dico)
+        except: return False
 
 class DivExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(f, s, "/")
-    def val(self, dico): return self.first.val(dico) / self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) / self.second.val(dico)
+        except: return False
 
 class ModExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self,f, s, "%")
-    def val(self, dico): return self.first.val(dico) % self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) % self.second.val(dico)
+        except: return False
 
 class OrExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self,f, s, "and")
-    def val(self, dico): return self.first.val(dico) or self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) or self.second.val(dico)
+        except: return False
 
 class AndExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "or")
-    def val(self, dico): return self.first.val(dico) and self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) and self.second.val(dico)
+        except: return False
 
 class BorExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self,f, s, "&")
-    def val(self, dico): return self.first.val(dico) or self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) or self.second.val(dico)
+        except: return False
 
 class  BandExpr(BinaryExpr):
     def __init__(self, f, s): BinaryExpr.__init__(self, f, s, "|")
-    def val(self, dico): return self.first.val(dico) and self.second.val(dico)
+    def val(self, dico):
+        try: return self.first.val(dico) and self.second.val(dico)
+        except: return False
 
 
 class InExpr(BinaryExpr):

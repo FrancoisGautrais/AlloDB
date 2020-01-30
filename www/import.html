@@ -1,0 +1,54 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Importer</title>
+
+</head>
+
+<body>
+    <#include("www/gen/header.html")>
+
+    <main>
+        <div class="container row">
+            <div class="row col  s12 offset-m4 m4">
+                <center><h1>Importer</h1></center>
+
+                <form id="root-widget" action="/import" method="post" class="row col s12" enctype='multipart/form-data'>
+                    <div class="file-field input-field col s12" >
+                        <div class="btn">
+                            <span>Parcourir</span>
+                            <input type="file" name="file">
+                        </div>
+                            <div class="file-path-wrapper">
+                            <input class="file-path validate" type="text">
+                        </div>
+                    </div>
+
+                    <div class="input-field col s12">
+                        <label>
+                            <input type="checkbox" name="erase"/>
+                            <span>Ecraser</span>
+                        </label>
+                    </div>
+
+                    <div class="input-field col s12" style="margin-top: 50px;">
+                        <input type="submit" class="btn fond-color-2 color-4" />
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <#include("www/gen/footer.html")>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+</body>
+
+</html>

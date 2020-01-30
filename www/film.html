@@ -31,6 +31,9 @@ main {
     <div class="const" id="CONST_PATH">{{path}}</div>
     <#include("www/gen/overlay.html")>
 
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
 
     <main>
         <div class="container">
@@ -66,7 +69,6 @@ main {
                                 <input id="t_note" type="number" pattern="[0-9]+([\.,][0-9]+)?" step="0.1" class="validate">
                                 <label for="t_note">Note / 5</label>
                             </span>
-
                         </div>
                         <div class="input-field col s12">
                             <textarea id="ta_comment" class="materialize-textarea"></textarea>
@@ -79,10 +81,6 @@ main {
             </div>
         </div>
     </main>
-
-
-
-
 
     <#include("www/gen/footer.html")>
 

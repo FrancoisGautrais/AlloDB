@@ -13,6 +13,7 @@ class FormFile:
         self.name=""
         self.mime=""
         self.attrs={}
+        self.has_next=False
 
     def parse_head(self):
         bound=self.soc.readline()
@@ -52,9 +53,24 @@ class FormFile:
         self.soc.read(2)
         return FormFile.END_BOUND
 
+    def parse_content(self):
+        x=self.soc.read(1)
+        out=x
+        while True:
+            x=self.soc.read(1)
+            if x==bytes("\n", "ascii"):
+                bound=self.is_bound()
+                out+=x
+                if bound==FormFile.END_BOUND:
+                    self.has_next=False
+                    return out
+                elif bound == FormFile.SIMPLE_BOUND:
+                    self.has_next=True
+                    return out
 
-    def save(self, p):
-        out=path.normpath(p+"/"+self.filename)
+
+    def save(self, p, forcePath=False):
+        out=path.normpath(p+("" if forcePath else "/"+self.filename))
 
         # si 'out" est un dossier => filename = "" => Pas de fichier
         if self.filename=="":
@@ -62,8 +78,10 @@ class FormFile:
                 self.soc.read(1)
                 bound=self.is_bound()
                 if bound == FormFile.END_BOUND:
+                    self.has_next=False
                     return False
                 elif bound == FormFile.SIMPLE_BOUND:
+                    self.has_next=True
                     return True
         log.debug("Writing file to '"+out+"'")
         with open(out, "wb") as f:
@@ -75,6 +93,8 @@ class FormFile:
                     bound=self.is_bound()
 
                     if bound==FormFile.END_BOUND:
+                        self.has_next=False
                         return False
                     elif bound == FormFile.SIMPLE_BOUND:
+                        self.has_next=True
                         return True

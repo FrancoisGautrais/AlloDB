@@ -110,6 +110,10 @@ class AlloServer(RESTServer):
         self.db = DB.fromjson("db.json", self.user)
         self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
         self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html")))
+        self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html")))
+        self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html")))
+        self.route("POST", "/import", self.handle_import)
+        self.route("GET", "/export", lambda req, res: res.serve_file(config.user("fanch"),  forceDownload=True))
         self.route("GET", "/director/#id", self.handle_director)
         self.route("GET", "/actor/#id", self.handle_actor)
         self.route("GET", "/film/#id", self.handle_film)
@@ -135,6 +139,11 @@ class AlloServer(RESTServer):
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache())
 
+    def handle_import(self, req: HTTPRequest, res: HTTPResponse):
+        f=req.multipart_next_file()
+        f.save(config.user("fanch"), forcePath=True)
+
+        res.serve301("/")
 
     def handle_actor(self, req: HTTPRequest, res: HTTPResponse):
         id=req.params["id"].replace("+", " ")
