@@ -67,6 +67,7 @@ class FormFile:
                 elif bound == FormFile.SIMPLE_BOUND:
                     self.has_next=True
                     return out
+            else: out+=x
 
 
     def save(self, p, forcePath=False):

@@ -141,8 +141,10 @@ class AlloServer(RESTServer):
 
     def handle_import(self, req: HTTPRequest, res: HTTPResponse):
         f=req.multipart_next_file()
-        f.save(config.user("fanch"), forcePath=True)
-
+        #f.save(config.user("fanch"), forcePath=True)
+        x=f.parse_content()
+        js=json.loads(x)
+        self.db.userdata.import_json(js["db"])
         res.serve301("/")
 
     def handle_actor(self, req: HTTPRequest, res: HTTPResponse):

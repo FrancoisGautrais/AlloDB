@@ -52,6 +52,84 @@
                     {{note}}/5 (parmi {{nnote}})</p>
             </div>
         </span>
+        <div class="right">
+            <div>
+                <label>
+                    <input type="checkbox"  id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
+                    <span>Vu</span>
+                </label>
+            </div>
+            <div>
+                <label>
+                    <input type="checkbox" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
+                    <span>À (re)voir</span>
+                </label>
+            </div>
+            <div class="input-field">
+                <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
+                <label for="t_note_{{id}}">Note / 5</label>
+            </div>
+        </div>
     </li>
 </ul>
+
 {{/data}}
+
+
+<script>
+function _change_value(id, data){
+    $.ajax({
+        type: "POST",
+        url: "/film/"+id,
+        contentType: "application/json",
+        data: JSON.stringify(data),
+        success: function(data){ M.toast({html: 'Valeur modifiée'}) },
+        error: function(data, err){ M.toast({html: 'Erreur : '+err}) }
+    });
+}
+
+function seen_changed(id, state){
+    _change_value(id, { seen : state })
+}
+
+function to_see_changed(id, state){
+    _change_value(id, { tosee : state })
+}
+
+function ownnote_change(id, n){
+
+    _change_value(id, { ownnote : n })
+}
+
+function find_callback(id){
+    if(id.startsWith("cb_seen")) return seen_changed
+    if(id.startsWith("cb_to")) return to_see_changed
+    return ownnote_change
+}
+
+function main_callback(i, obj){
+    obj=$(obj)
+    var objid=obj.attr("id")
+
+    data=obj.data()
+    if(objid.startsWith("cb_")) obj.prop("checked", data.value.toLowerCase()=="true")
+    else{
+        obj.val(data.value)
+        console.log(objid,"->", data.value)
+    }
+    obj.change(function(evt){
+        var obj=$(evt.target)
+        var id = parseInt(obj.data("id"))
+        var val = objid.startsWith("cb_") ? obj.prop("checked") : parseFloat(obj.val())
+        find_callback(objid)(id, val)
+    })
+}
+
+$( document ).ready(function(){
+    $("input[id^=cb_seen_]").each(main_callback)
+    $("input[id^=cb_to_see_]").each(main_callback)
+    $("input[id^=t_note_]").each(main_callback)
+});
+
+
+</script>

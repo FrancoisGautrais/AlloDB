@@ -25,6 +25,11 @@ class User:
 
     def changed(self): return self.change
 
+    def import_json(self, js):
+        for x in js:
+            self.db[x]=js[x]
+        self.save()
+
     def json(self):
         js={}
         js["name"]=self.name

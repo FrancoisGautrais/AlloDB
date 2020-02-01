@@ -372,7 +372,7 @@ class DbRow:
                     self.data[i]=value
                     return
 
-        self.userdata.set(self.id, item, value)
+        self.userdata.set(str(self.id), item, value)
 
     def json(self, format=[]):
         if len(format)==0: format=self.header.allheads()
