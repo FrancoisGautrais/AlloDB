@@ -242,7 +242,7 @@ class Parser:
             self._next()
             x = self._expr()
             if self.tok != Lexer.TOK_PF:
-                raise Exception("Parenthese fermante manquante=> " + Lexer.tokstr(self.tok))
+                raise Exception("Parenthese fermante manquante=> " + Lexer.tokstr(self.tok)+ "'"+str(self.lex.data)+"'")
             self._next()
             return x
         # Number

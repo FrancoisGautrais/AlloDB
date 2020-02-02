@@ -45,10 +45,10 @@
                 <div class="title-filename color-5">{{name}}</div>
             </a>
             <div class="subtitle-filename color-5">
-                <p> Sorti en {{year}}, <#minToStr({{duration}})><br>
+                <p> Sorti en {{year}}, <#minToStr({{duration}})>, {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                     De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
                     {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
-                    {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
+                    Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}} <br>
                     {{note}}/5 (parmi {{nnote}})</p>
             </div>
         </span>

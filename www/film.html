@@ -48,6 +48,7 @@ main {
                         {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                         Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}}<br>
                         {{note}}/5 (parmi {{nnote}}) {{nreview}} critiques</p>
+                        <a href="http://www.allocine.fr/film/fichefilm_gen_cfilm={{id}}.html"> Allociné </a>
                         <h3>Synopsis</h3>
                         <p>{{description}}</p>
                         <div class="row">

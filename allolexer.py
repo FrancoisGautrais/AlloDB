@@ -179,6 +179,7 @@ class Lexer:
         ">": TOK_CMP,
         ">=": TOK_CMP,
         "=": TOK_CMP,
+        "!=": TOK_CMP,
         ".": TOK_REF,
         "[": TOK_CO,
         "]": TOK_CF

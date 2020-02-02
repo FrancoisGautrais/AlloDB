@@ -70,10 +70,10 @@ def json_to_request(x):
     if x["director"]!=None: l.append('"'+unquote_plus(x["director"])+'" in director ')
 
     #19
-    if x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True")
+    if x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True ")
 
     #20
-    if x["seen"]!=None: l.append(' seen '+("=" if x["seen"] else "!=") + " True")
+    if x["seen"]!=None: l.append(' seen '+("=" if x["seen"] else "!=") + " True ")
 
     base = "select * where ("
     for i in range(len(l)):
@@ -187,15 +187,19 @@ class AlloServer(RESTServer):
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
         request = ""
+        pagesize = AlloServer.RESULT_PER_PAGE
         if req.method=="POST":
             body=req.body_json()
             if "json" in body:
-                request=json_to_request(json.loads(body["json"]))
+                bodyjson=json.loads(body["json"])
+                if "nperpage" in bodyjson:
+                    pagesize = int(bodyjson["nperpage"])
+                request=json_to_request(bodyjson)
             elif "text" in body:
                 request="(select * where "+unquote_plus(body["text"])+" )"
             tmp=Request(self.db.execute(request))
             x=tmp.result
-            x.pagesize = AlloServer.RESULT_PER_PAGE
+            x.pagesize = pagesize
             self.requests[x.id]=tmp
         else:
             if "id" in req.params and "page" in req.params and req.params["id"] in self.requests:

@@ -129,6 +129,8 @@ def extract(htmlcont, columns):
 
 
 GENRE_LIST={
+    "inconnu" : "",
+    "" : "inconnu",
     "comédie" : "comédie",
     "divers" : "divers",
     "drame" : "drame",
@@ -166,6 +168,8 @@ GENRE_LIST={
 }
 
 PAYS_LIST={
+    "inconnu" : "",
+    "" : "inconnu",
     "af": "afghan",
     "afghan": "af",
     "al": "albanais",
@@ -515,6 +519,6 @@ PAYS_LIST={
 ID_TO_PAYS={}
 PAYS_TO_ID={}
 for x in PAYS_LIST:
-    if len(x)==2:
+    if len(x)<=2:
         ID_TO_PAYS[x]=PAYS_LIST[x]
         PAYS_TO_ID[PAYS_LIST[x]]=x
