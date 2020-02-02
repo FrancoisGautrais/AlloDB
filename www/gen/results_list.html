@@ -12,7 +12,6 @@
     position: absolute;
     display: inline-block;
     margin-left: 10px;
-    margin-top: 10px;
 }
 
 .list-link {
@@ -37,7 +36,7 @@
     <li class="collection-item custom-list" >
         <a href="/film/{{id}}">
             <span class="custom-list-item-icon">
-                <img src="{{image}}" height="150px">
+                <img src="{{image}}" height="170px">
             </span>
         </a>
         <span class="custom-list-item second-line">
@@ -49,25 +48,28 @@
                     De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
                     {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
                     Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}} <br>
-                    {{note}}/5 (parmi {{nnote}})</p>
+                    {{note}}/5 (parmi {{nnote}}) {{#lists}}<br>
+                    Listes: <a href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a>{{/lists}}</p>
             </div>
         </span>
         <div class="right">
             <div>
                 <label>
-                    <input type="checkbox"  id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
+                    <input type="checkbox" class="inline-cb" id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
                     <span>Vu</span>
                 </label>
-            </div>
-            <div>
+                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
                 <label>
-                    <input type="checkbox" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
+                    <input type="checkbox" class="inline-cb" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
                     <span>À (re)voir</span>
                 </label>
             </div>
             <div class="input-field">
                 <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
                 <label for="t_note_{{id}}">Note / 5</label>
+            </div>
+            <div class="input-field">
+                <a class="btn" onclick="show_list_root({{id}})">+ Liste</a>
             </div>
         </div>
     </li>

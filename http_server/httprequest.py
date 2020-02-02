@@ -260,13 +260,14 @@ class HTTPResponse(_HTTP):
     def header(self, key : str, val):
         self._headers[key]=val
 
-    def end(self, data):
+    def end(self, data, contentType=None):
+        if contentType: self.content_type(contentType)
         self.body=data
         if isinstance(data, str):
             self._body_type=BODY_STRING
         elif isinstance(data, bytes):
             self._body_type=BODY_BYTES
-        elif isinstance(data, dict):
+        elif isinstance(data, (dict, list)):
             self._body_type=BODY_DICT
         elif isinstance(data, io.BufferedIOBase):
             self._body_type=BODY_FILE

@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from allolist import AlloList
 import uuid
 from urllib.parse import unquote_plus
 import config
@@ -113,20 +114,84 @@ class AlloServer(RESTServer):
         self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html")))
         self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html")))
         self.route("POST", "/import", self.handle_import)
-        self.route("GET", "/export", lambda req, res: res.serve_file(config.user("fanch"),  forceDownload=True))
+        self.route("GET", "/export", self.handle_export)
         self.route("GET", "/director/#id", self.handle_director)
         self.route("GET", "/actor/#id", self.handle_actor)
         self.route("GET", "/film/#id", self.handle_film)
         self.route("POST", "/film/#id", self.handle_film_modify)
         self.route("GET", "/results/#id/#page", self.handle_results)
         self.route("POST", "/results", self.handle_results)
+
+        self.route("GET", "/list", self.handle_list_all)
+        self.route("GET", "/list/create/#name", self.handle_list_create)
+        self.route("GET", "/list/#idl", self.handle_list_get)
+        self.route("GET", "/list/#idl/remove", self.handle_list_remove)
+        self.route("GET", "/list/#idl/add/#idfilm", self.handle_list_add)
+        self.route("GET", "/list/#idl/up/#idfilm", self.handle_list_up)
+        self.route("GET", "/list/#idl/down/#idfilm", self.handle_list_down)
+        self.route("GET", "/list/#idl/remove/#idfilm", self.handle_list_remove_item)
+
         self.static("/", config.WWW_DIR)
+
+    def handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
+        x=self.db.userdata.list_json()
+        res.end(x, "application/json")
+
+    def handle_list_create(self, req: HTTPRequest, res: HTTPResponse):
+        name=req.params["name"]
+        l=AlloList(name=name)
+        self.db.userdata.lists[l.id]=l
+        res.end(l.json(), "application/json")
+        self.db.userdata.save()
+
+    def handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
+        id=req.params["idl"]
+        x=self.db.userdata.list_get_by_id(id)
+        if x:
+            res.end(x.json_set(self.db), "application/json")
+        else:
+            res.serve404()
+
+    def handle_list_remove(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        self.db.userdata.list_remove(id)
+        self.db.userdata.save()
+
+    def handle_list_add(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        idfilm = req.params["idfilm"]
+        if not self.db.userdata.add_to_list(idfilm, id):
+            res.serve404()
+
+    def handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        idfilm = req.params["idfilm"]
+        x = self.db.userdata.list_get_by_id(id)
+        if x: x.up(idfilm)
+        else: res.serve404()
+
+    def handle_list_down(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        idfilm = req.params["idfilm"]
+        x = self.db.userdata.list_get_by_id(id)
+        if x: x.down(idfilm)
+        else: res.serve404()
+
+    def handle_list_remove_item(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        idfilm = req.params["idfilm"]
+        if not self.db.userdata.remove_to_list(idfilm, id):
+            res.serve404()
 
     def _check_query(self, req, query):
         if "type" in req.query:
             type=req.query["type"]
             order=req.query["order"] if "order" in req.query else ""
             query.sort(type, order!="desc")
+
+    def handle_export(self, req: HTTPRequest, res: HTTPResponse):
+        self.db.userdata.save()
+        res.serve_file(config.user("fanch"), forceDownload=True)
 
     def handle_director(self, req: HTTPRequest, res: HTTPResponse):
         id=req.params["id"].replace("+", " ")
@@ -171,7 +236,7 @@ class AlloServer(RESTServer):
         res.serve_file_gen(path, x.moustache())
 
     def handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
-        id=int(req.params["id"])
+        id=req.params["id"]
         if not id in self.db.ids: return res.serve404()
         js = req.body_json()
         if not js: return res.serve400()
@@ -209,15 +274,14 @@ class AlloServer(RESTServer):
                 return res.serve400()
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache())
+        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json()}))
 
 filecache.init()
 usr = None
-try :
+if os.path.exists(config.user("fanch")):
     usr = user.User.fromjsonfile("fanch")
-except:
+else:
     usr= user.User.createuser("fanch")
-
 
 als = AlloServer(usr)
 als.listen(8080)

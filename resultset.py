@@ -38,12 +38,12 @@ class ResultSet:
         self.data= (set if set else [])
         if set!=None: self.close()
 
-    def moustache(self):
+    def moustache(self, base={}):
         arr=[]
         for x in self.data:
             arr.append(x.json(self.columns))
 
-        return {
+        out=  {
             "count" : len(self.data),
             "time" : int(self.process_time*1000)/1000,
             "data" : arr if self.pagesize<=0 else arr[self.page*self.pagesize:(self.page+1)*self.pagesize],
@@ -51,8 +51,12 @@ class ResultSet:
             "nperpage" : self.pagesize,
             "id" : self.id,
             "npages" : 1 if self.pagesize<=0 else (int(len(self.data)/self.pagesize)+ (1 if len(self.data)%self.pagesize>0 else 0)),
-            "payslist" : alloimport.ID_TO_PAYS
+            "payslist": alloimport.ID_TO_PAYS
         }
+
+        for x in base:
+            out[x]=base[x]
+        return out
 
     def close(self):
         if self.order and len(self.order)>0:

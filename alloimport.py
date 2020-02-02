@@ -18,7 +18,7 @@ def filter_id(line):
     if n>0:
         line=line[n+12:]
         n=line.find('"')
-        return int(line[:n])
+        return line[:n]
     return None
 
 def filter_date(line):

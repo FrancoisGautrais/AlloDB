@@ -1,0 +1,136 @@
+
+<div class="card darken-1 modal" id="list_main">
+    <div class="card-content">
+        <div class="row">
+            <div class="input-field col s10">
+                <input placeholder="Filtrer" id="it-list-filter" type="text">
+                <label for="it-list-filter">Filtrer</label>
+            </div>
+            <div class="input-field col s2">
+                <i class="material-icons" onclick="new_list()">add</i>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th><center>Nom</center></th>
+                    <th><center>#</center></th>
+                    <th><center>Actions</center></th>
+                </tr>
+            </thead>
+
+            <tbody id="list_root">
+                <tr>
+                    <td>Alvin</td>
+                    <td>Eclair</td>
+                    <td>$0.87</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card darken-1 modal" id="ask_delete">
+    <div class="card-content">
+        <center><span class="card-title" >Supprimer</span></center>
+    </div>
+    <div class="card-action row">
+
+        <a class="btn fond-color-1 color-4 col  s6" onclick="confirmDelete(_toDelete)">Supprimer</a>
+        <a class="btn fond-color-2 color-4 col  s6" onclick="modalClose('ask_delete')">Annuler</a>
+    </div>
+</div>
+
+<style>
+td > center > i {
+    margin-right: 10px;
+    font-size: 32px !important;
+}
+
+</style>
+
+<script>
+var _toDelete=null
+var _currentFilmId=null
+
+function new_list()
+{
+    var obj = $("#it-list-filter")
+    var name = obj.val()
+    $.ajax({
+            type: 'get',
+            url: "/list/create/"+name,
+            success : function(js){
+                list_root(_currentFilmId)
+                 M.toast({html: 'Liste "'+name+'" crée'})
+            },
+            error : function(_a, _b, _c) {error("Impossible de créer '"+name+"'", _a.responseText)}
+
+     })
+}
+
+function confirmDelete(n){
+   modalClose("ask_delete")
+   $.ajax({
+            type: 'get',
+            url: "/list/"+n+"/remove",
+            success : function(js){
+                modalClose("ask_delete")
+                list_root(_currentFilmId)
+                 M.toast({html: 'Liste supprimée'})
+            },
+            error : function(_a, _b, _c) {error("Impossible de supprimer '"+n+"'", _a.responseText)}
+
+     })
+}
+
+function addTolist(id){
+    $.ajax({
+            type: 'get',
+            url: "/list/"+id+"/add/"+_currentFilmId,
+            success: function(jsonData){
+                list_root(_currentFilmId)
+                 M.toast({html: 'Film ajouté'})
+            },
+            error : function(_a, _b, _c) {error("Impossible d'ajouter '"+_currentFilmId+"'", _a.responseText)}
+     });
+}
+
+function askDeleteList(id){
+    modal("ask_delete")
+    _toDelete=id
+}
+
+function show_list_root(n)
+{
+    modal("list_main")
+    list_root(n)
+}
+var test=null
+function list_root(fid){
+    _currentFilmId=fid
+    $.ajax({
+            type: 'get',
+            url: "/list",
+            success: function(jsonData){
+                var obj = $("#list_root")
+                obj.empty()
+                for(var key in jsonData){
+                    var list=jsonData[key]
+                    test=list
+                    var tr = $("<tr>")
+                    if(list.list.indexOf(""+fid)<0){
+                        tr.append($("<td><center>"+list.name+"</center></td>"))
+                        tr.append($("<td><center>"+list.list.length+"</center></td>"))
+                        tr.append($('<td><center><i class="material-icons" onclick="addTolist(\''+list.id+'\')">add</i>'+
+                                        '<i class="material-icons" onclick="askDeleteList(\''+list.id+'\')">cancel</i>'+
+                                        '</center></td>'))
+                        obj.append(tr)
+                    }
+                }
+            },
+            error : function(_a, _b, _c) {error("Impossible d'afficher '"+fid+"'", _a.responseText)}
+     });
+}
+
+</script>

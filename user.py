@@ -1,5 +1,5 @@
 import json
-
+from allolist import AlloList
 import config
 
 
@@ -8,33 +8,52 @@ def emptyrow():
         "ownnote": None,
         "tosee" : False,
         "seen" : False,
-        "comment" : ""
+        "comment" : "",
+        "lists" : []
     }
 
 class User:
-    HEADS=["ownnote", "tosee", "seen", "comment"]
+    HEADS=["ownnote", "tosee", "seen", "comment", "lists"]
 
     def __init__(self, name=None, js=None):
         self.db={}
         self.change=False
+        self.lists={}
         if name:
             self.name=name
         elif js:
             self.name=js["name"]
             self.db=js["db"]
+            if "lists" in js:
+                for x in js["lists"]:
+                    self.lists[x]=AlloList(js=js["lists"][x])
+            else: js["lists"]=[]
 
     def changed(self): return self.change
+
+    def list_json(self):
+        all={}
+        for x in self.lists:
+            all[x]=self.lists[x].json()
+        return all
 
     def import_json(self, js):
         for x in js:
             self.db[x]=js[x]
         self.save()
 
+
+
     def json(self):
         js={}
         js["name"]=self.name
         js["db"]=self.db
+        x={}
+        for l in self.lists:
+            x[l]=self.lists[l].json()
+        js["lists"]=x
         return json.dumps(js)
+
 
     def array(self, id):
         out=[]
@@ -43,6 +62,13 @@ class User:
             for h in User.HEADS:
                 out.append(tmp[h])
         return out
+
+    def list_get_by_id(self, id):
+        if id in self.lists: return self.lists[id]
+        return None
+
+    def list_remove(self, id):
+        if id in self.lists: del self.lists[id]
 
     def put(self, id, array):
         if len(array) != len(User.HEADS): raise Exception("Error bad sie of array to put")
@@ -70,6 +96,20 @@ class User:
             self.db[id][k] = v
             self.save()
         else: raise Exception(k+" not a user header")
+
+    def add_to_list(self, filmid, listid):
+        if not listid in self.lists: return False
+        if not (filmid in self.db): self.db[filmid]=emptyrow()
+        self.db[filmid]["lists"].append(listid)
+        self.lists[listid].list.append(filmid)
+        return True
+
+    def remove_to_list(self, filmid, listid):
+        if not listid in self.lists: return False
+        self.db[filmid]["lists"].remove(listid)
+        self.lists[listid].list.remove(filmid)
+        return True
+
 
     def save(self):
         userpath=config.user(self.name)
