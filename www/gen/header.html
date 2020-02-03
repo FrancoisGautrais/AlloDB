@@ -39,7 +39,11 @@
     top: 2px;
     left: 5px;
 }
-
+.menu-input {
+    margin-left: 5px !important;
+    padding-right: 5px !important;
+    width: calc( 100% - 10px) ! important;
+}
 </style>
 
 
@@ -55,6 +59,14 @@
 <ul id="slide-out" class="sidenav menu-text fond-color-1">
     <li class="navbar-item"><div class="user-view"></li>
     <li><a  class="nav-text color-4" class="navbar-item" href="/">Accueil</a></li>
+    <li>
+        <div class="input-field menu-input">
+            <input class="nav-text color-4 navbar-item autocomplete"
+                   onkeyup="on_autocomplete_up($('#it-head-search'), 'name')"
+                   type="text" id="it-head-search"/>
+            <label for="it-head-search">Recherche</label>
+        </div>
+    </li>
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/request">Requête manuelle</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/index.html">Recherche avancée</a></li>
@@ -128,4 +140,58 @@
 
 <script>
 data=<#json(get())>
+function autocomp_to_obj(arr){
+    var out={}
+    for( var i in arr) out[arr[i]]=null
+    return out
+}
+
+function autocomp_to_obj_name(arr){
+    var out={}
+    for( var i in arr) out[i]=null
+    return out
+}
+
+$(document).ready(function (){
+    $("#it-head-search").keypress(function(evt) { if(evt.which==13) on_head_search() })
+    $('#it-head-search').autocomplete({ onAutocomplete: on_head_search })
+})
+
+function on_head_search(){
+    var elem = $('#it-head-search')
+    var val = elem.val()
+    var id = elem[0].autocompletedata[val]
+    if ( id ) url("/film/"+id)
+    else{
+        $('body').append($('<form/>')
+              .attr({'action': "results", 'method': 'post', 'id': 'replacer'})
+              .append($('<input/>')
+                .attr({'type': 'hidden', 'name': 'json', 'value': JSON.stringify({ match: val})})
+              )
+            ).find('#replacer').submit();
+    }
+}
+
+function on_autocomplete_up(elem, type){
+    var val = elem.val()
+
+    if(val.length>=1){
+        $.ajax({
+                type: "GET",
+                url: "/autocomplete/"+type+"/"+val+"/9",
+                success: function(data){
+
+                console.log(data)
+                    var instance = M.Autocomplete.getInstance(elem)
+                    elem[0].autocompletedata=data
+                    instance.updateData(
+                        type=="name" ? autocomp_to_obj_name(data) : autocomp_to_obj(data)
+                    )
+                    if( !instance.isOpen) instance.open()
+                }
+        })
+    }
+
+}
+
 </script>

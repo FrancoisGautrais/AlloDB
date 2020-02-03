@@ -119,6 +119,7 @@ $(document).ready(function(){
             x.parent().find("input").attr("name", attr)
         }
     })
+    $('.tooltipped').tooltip();
 })
 
 function clearTextSelection()

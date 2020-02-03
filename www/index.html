@@ -11,6 +11,9 @@
 </head>
 
 <body>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
     <#include("www/gen/header.html")>
 
     <main>
@@ -82,7 +85,8 @@
                                 "nreview", "# critique",
                                 "tosee", "Marqué à voir",
                                 "seen", "Marqué vu",
-                                "id", "ID"
+                                "id", "ID",
+                                "shuffle", "Hasard"
                                 ), "order"
                             ), "col s8"),
                             col(select("widget-s-order-sort", "Marqué déja vu", objl("asc", "Croissant", "desc", "Décroissant"), "order-sort"), "col s4")
@@ -106,6 +110,20 @@
         </div>
     </main>
     <script>
+        $(document).ready(function(){
+            $("#widget-it-match").autocomplete()
+            $("#widget-it-match").keypress(function(evt) { if(evt.which==13) send_request() })
+            $("#widget-it-match").keyup(function() { on_autocomplete_up($("#widget-it-match"), "name") })
+
+            $("#widget-it-actor").autocomplete()
+            $("#widget-it-actor").keypress(function(evt) { if(evt.which==13) send_request() })
+            $("#widget-it-actor").keyup(function() { on_autocomplete_up($("#widget-it-actor"), "actor") })
+
+
+            $("#widget-it-director").autocomplete()
+            $("#widget-it-director").keypress(function(evt) { if(evt.which==13) send_request() })
+            $("#widget-it-director").keyup(function() { on_autocomplete_up($("#widget-it-director"), "director") })
+        })
         var postjson={}
 
         function it_val(x){ return (x.length==0)?null:x  }
@@ -146,9 +164,6 @@
         }
     </script>
     <#include("www/gen/footer.html")>
-    <script type="text/javascript" src="/js/jquery.min.js"></script>
-    <script type="text/javascript" src="/js/materialize.min.js"></script>
-    <script type="text/javascript" src="/js/init.js"></script>
 </body>
 
 </html>

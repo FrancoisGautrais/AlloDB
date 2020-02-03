@@ -36,8 +36,7 @@ class HTTPServer(ServerSocket):
             if self.mode==HTTPServer.SINGLE_THREAD:
                 self._handlerequest_oneshot(HTTPRequest(x))
             elif self.mode==HTTPServer.SPAWN_THREAD:
-                req = HTTPRequest(x)
-                start_thread( Callback(HTTPServer._handlerequest_oneshot, self, req))
+                start_thread( Callback(HTTPServer._handlerequest_oneshot, self, x))
             elif self.mode==HTTPServer.CONST_THREAD:
                 self.waitqueue.enqueue( (x, time.time()) )
 
@@ -64,6 +63,12 @@ class HTTPServer(ServerSocket):
             req = HTTPRequest(soc) if soc else None
 
     def _handlerequest_oneshot(self, req : HTTPRequest):
+        if not isinstance(req, HTTPRequest):
+            try:
+                req = HTTPRequest(req)
+            except DisconnectException:
+                log.critical("========== Error unable to read HTTP first line ==========")
+
         req.parse()
         res=HTTPResponse(200, )
         self.handlerequest(req, res)

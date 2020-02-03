@@ -85,6 +85,7 @@ class DbRow:
         self.id=self.data[0]
 
     def __getitem__(self, item):
+        if isinstance(item, int): return self.data[item]
         return self.resolve(item)
 
     def function(self, name, args):

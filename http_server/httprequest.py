@@ -371,6 +371,11 @@ class HTTPResponse(_HTTP):
         else:
             self.end(data)
 
+    def serveJson(self, data, code=200, headers={}):
+        headers=headers.copy()
+        self.content_type("application/json")
+        return self.serv(code, headers, data)
+
     def serve100(self, header={}, data={}, file=None, filegen=None ): self.serv(100, header, data, file, filegen)
 
     def serve200(self, header={}, data={}, file=None, filegen=None ): self.serv(200, header, data, file, filegen)

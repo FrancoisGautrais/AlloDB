@@ -61,6 +61,7 @@
     </div>
 </div>
 </center>
+
 {{/is-list}}
 {{^is-list}}{{#name}}<h1>{{name}}</h1>{{/name}}{{/is-list}}
 <p>{{count}} résultats en {{time}} secondes</p>
@@ -68,13 +69,13 @@
 <ul class="collection sortable" data-name="{{name}}" id="ul-{{id}}">
 
     <li class="collection-item custom-list" >
-        <a href="/film/{{id}}">
+        <a href="/film/{{id}}" class="tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">
             <span class="custom-list-item-icon">
                 <img src="{{image}}" height="170px">
             </span>
         </a>
         <span class="custom-list-item second-line">
-            <a href="/film/{{id}}" class="title-filename color-5">{{name}}</a>
+            <a href="/film/{{id}}" class="title-filename color-5 tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">{{name}}</a>
             <i onclick="show_download({{id}})" class="material-icons color-1 download-icon">file_download</i>
 
             <div class="subtitle-filename color-5">

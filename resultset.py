@@ -3,7 +3,7 @@ import alloimport
 import time
 import uuid
 from functools import cmp_to_key
-
+import random
 import utils
 
 
@@ -65,7 +65,10 @@ class ResultSet:
 
 
     def sort(self, key, reverse):
-        self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if reverse else -1)))
+        if key=="shuffle":
+            random.shuffle(self.data)
+        else:
+            self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if reverse else -1)))
 
     def put(self, row):
         if isinstance(row, (list, tuple)):

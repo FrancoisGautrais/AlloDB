@@ -1,3 +1,4 @@
+from urllib import parse
 from ...filecache import filecache
 from ..htmlgen import html_gen_fd
 import  copy
@@ -117,3 +118,10 @@ def inst_minToStr(args, data):
 
 def inst_jsbool(args, data):
     return "true" if args[0] else "false"
+
+def inst_urlencode(args, data): return parse.quote(args[0])
+
+def inst_urldecode(args, data): return parse.unquote(args[0])
+
+def inst_escapequote(args, data):
+    return args[0].replace("\"", "\\\"")

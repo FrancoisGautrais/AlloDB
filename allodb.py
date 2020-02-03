@@ -408,6 +408,31 @@ class DB:
 
         return out
 
+    def autocomplete(self, pattern, type, max=-1):
+        if max<=0: max=len(self.data)
+        col = self.header[type]
+        year = self.header["year"]
+        base = None
+
+        pattern=pattern.lower()
+        out=[]
+        if type=="name":
+            out={}
+            for id in self.ids:
+                row=self.ids[id][col].lower()
+                if len(out) > max: break
+                if row.lower().find(pattern)>=0:
+                    out[row+" ("+str(self.ids[id][year])+")"]=id
+        else:
+            if type=="actor": base=self.actors
+            elif type=="director": base=self.directors
+            else: raise Exception("Column '"+type+"' not found")
+            for row in base:
+                if len(out)>max: break
+                if row.lower().find(pattern)>=0:
+                    out.append(row)
+        return out
+
     def __len__(self):
         return len(self.data)
 

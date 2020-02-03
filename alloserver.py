@@ -24,17 +24,17 @@ def default(js, key, fct=None, default=None):
 def json_to_request(x):
     l=[]
     # 1 match
-    if x["match"]!=None: l.append('"'+unquote_plus(x["match"])+'" in name ')
+    if "match" in x and x["match"]!=None: l.append('"'+unquote_plus(x["match"])+'" in name ')
 
     # 2/3 pays
-    if x["pays"]!=None and x["pays-op"]!=None:
+    if "pays" in x and "pays-op" in x and x["pays"]!=None and x["pays-op"]!=None:
         tmp="("
         arr=x["pays"]
         for i in range(len(arr)):
             tmp+=(x["pays-op"] if i>0 else "")+' "'+unquote_plus(arr[i])+'" in nationality '
         l.append(tmp+")")
     #4/5 genre
-    if x["genre"] != None and x["genre-op"] != None:
+    if "genre" in x and "genre-op" in x and x["genre"] != None and x["genre-op"] != None:
         tmp = "("
         arr = x["genre"]
         for i in range(len(arr)):
@@ -42,42 +42,42 @@ def json_to_request(x):
         l.append(tmp + ")")
 
     # 6 / 7 annee
-    if x["year-min"]!=None and x["year-max"]!=None: l.append(' annee in range('+str(x["year-min"])+','+str(x["year-max"])+') ')
-    elif x["year-min"]!=None: l.append(' year >= '+str(x["year-min"])+" ")
-    elif x["year-max"]!=None: l.append(' year <= '+str(x["year-max"])+" ")
+    if "year-min" in x and "year-max" in x and x["year-min"]!=None and x["year-max"]!=None: l.append(' annee in range('+str(x["year-min"])+','+str(x["year-max"])+') ')
+    elif "year-min" in x and x["year-min"]!=None: l.append(' year >= '+str(x["year-min"])+" ")
+    elif "year-max" in x and x["year-max"]!=None: l.append(' year <= '+str(x["year-max"])+" ")
 
 
     # 8 / 9 note
-    if x["note-min"]!=None and x["note-max"]!=None: l.append(' note in range('+str(x["note-min"])+','+str(x["note-max"])+') ')
-    elif x["note-min"]!=None: l.append(' note >= '+str(x["note-min"])+" ")
-    elif x["note-max"]!=None: l.append(' note <= '+str(x["note-max"])+" ")
+    if "note-min" in x and "note-max" in x and x["note-min"]!=None and x["note-max"]!=None: l.append(' note in range('+str(x["note-min"])+','+str(x["note-max"])+') ')
+    elif "note-min" in x and x["note-min"]!=None: l.append(' note >= '+str(x["note-min"])+" ")
+    elif "note-max" in x and x["note-max"]!=None: l.append(' note <= '+str(x["note-max"])+" ")
 
     # 10 / 11 nnote
-    if x["nnote-min"]!=None and x["nnote-max"]!=None: l.append(' nnote in range('+str(x["nnote-min"])+','+str(x["nnote-max"])+') ')
-    elif x["nnote-min"]!=None: l.append(' nnote >= '+str(x["nnote-min"])+" ")
-    elif x["nnote-max"]!=None: l.append(' nnote <= '+str(x["nnote-max"])+" ")
+    if "nnote-min" in x and "nnote-max" in x and x["nnote-min"]!=None and x["nnote-max"]!=None: l.append(' nnote in range('+str(x["nnote-min"])+','+str(x["nnote-max"])+') ')
+    elif "nnote-min" in x and x["nnote-min"]!=None: l.append(' nnote >= '+str(x["nnote-min"])+" ")
+    elif "nnote-max" in x and x["nnote-max"]!=None: l.append(' nnote <= '+str(x["nnote-max"])+" ")
 
     # 12 / 13 nreview
-    if x["nreview-min"]!=None and x["nreview-max"]!=None: l.append(' nreview in range('+str(x["nreview-min"])+','+str(x["nreview-max"])+') ')
-    elif x["nreview-min"]!=None: l.append(' nreview >= '+str(x["nreview-min"])+" ")
-    elif x["nreview-max"]!=None: l.append(' nreview <= '+str(x["nreview-max"])+" ")
+    if "nreview-min" in x and "nreview-max" in x and x["nreview-min"]!=None and x["nreview-max"]!=None: l.append(' nreview in range('+str(x["nreview-min"])+','+str(x["nreview-max"])+') ')
+    elif "nreview-min" in x and x["nreview-min"]!=None: l.append(' nreview >= '+str(x["nreview-min"])+" ")
+    elif "nreview-max" in x and x["nreview-max"]!=None: l.append(' nreview <= '+str(x["nreview-max"])+" ")
 
     # 15 / 16 duration
-    if x["duration-min"]!=None and x["duration-max"]!=None: l.append(' duration in range('+str(x["duration-min"])+','+str(x["duration-max"])+') ')
-    elif x["duration-min"]!=None: l.append(' duration >= '+str(x["duration-min"])+" ")
-    elif x["duration-max"]!=None: l.append(' duration <= '+str(x["duration-max"])+" ")
+    if  "duration-min" in x and "duration-max" in x and x["duration-min"]!=None and x["duration-max"]!=None: l.append(' duration in range('+str(x["duration-min"])+','+str(x["duration-max"])+') ')
+    elif  "duration-min" in x and x["duration-min"]!=None: l.append(' duration >= '+str(x["duration-min"])+" ")
+    elif  "duration-max" in x and x["duration-max"]!=None: l.append(' duration <= '+str(x["duration-max"])+" ")
 
     #17
-    if x["actor"]!=None: l.append('"'+unquote_plus(x["actor"])+'" in actor ')
+    if "actor" in x and x["actor"]!=None: l.append('"'+unquote_plus(x["actor"])+'" in actor ')
 
     #18
-    if x["director"]!=None: l.append('"'+unquote_plus(x["director"])+'" in director ')
+    if "director" in x and x["director"]!=None: l.append('"'+unquote_plus(x["director"])+'" in director ')
 
     #19
-    if x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True ")
+    if "tosee" in x and x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True ")
 
     #20
-    if x["seen"]!=None: l.append(' seen '+("=" if x["seen"] else "!=") + " True ")
+    if "seen" in x and x["seen"]!=None: l.append(' seen '+("=" if x["seen"] else "!=") + " True ")
 
     base = "select * where ("
     for i in range(len(l)):
@@ -87,11 +87,11 @@ def json_to_request(x):
 
 
 
-    if x["order"]!=None and x["order-sort"]!=None:
+    if "order" in x and "order-sort" in x and x["order"]!=None and x["order-sort"]!=None:
         base+=" order by "+ x["order"]+" "
         if x["order-sort"]=="desc": base+="desc "
 
-    if x["rand"]!=None and x["rand"]>0:
+    if "rand" in x and x["rand"]!=None and x["rand"]>0:
         base="rand("+base+", "+str(x["rand"])+" ) "
 
 
@@ -138,6 +138,10 @@ class AlloServer(RESTServer):
         self.route("GET", "/showlist/#id/#page", self.handle_show_list)
 
         self.route("GET", "/short/#id", self.handle_short)
+
+
+        self.route("GET", "/autocomplete/#type/#match", self.handle_autocomplete)
+        self.route("GET", "/autocomplete/#type/#match/#max", self.handle_autocomplete)
 
         self.route("GET", "/searchfilm/#id", self.handle_search_film)
 
@@ -324,6 +328,12 @@ class AlloServer(RESTServer):
         x.pagesize = 10
         self.requests[x.id] = tmp
         res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : short[1]}))
+
+    def handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
+        type = req.params["type"]
+        match = req.params["match"]
+        max = int(req.params["max"]) if "max" in req.params else -1
+        res.serveJson(self.db.autocomplete(match,type, max))
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
