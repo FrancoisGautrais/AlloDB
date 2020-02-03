@@ -53,6 +53,21 @@ td > center > i {
 var _toDelete=null
 var _currentFilmId=null
 
+function filter_list()
+{
+    var list=$("#it-list-filter").val().toLowerCase()
+    console.log("->'"+list+"'")
+    $("#list_root").find("tr").each(function (i, x){
+        x=$(x)
+        var v = x.attr("data-value")
+        if(v.toLowerCase().search(list)>=0){
+            x.show()
+        } else {
+            x.hide()
+        }
+    })
+}
+
 function new_list()
 {
     var obj = $("#it-list-filter")
@@ -63,6 +78,7 @@ function new_list()
             success : function(js){
                 list_root(_currentFilmId)
                  M.toast({html: 'Liste "'+name+'" crée'})
+                 obj.val("")
             },
             error : function(_a, _b, _c) {error("Impossible de créer '"+name+"'", _a.responseText)}
 
@@ -80,9 +96,35 @@ function confirmDelete(n){
                  M.toast({html: 'Liste supprimée'})
             },
             error : function(_a, _b, _c) {error("Impossible de supprimer '"+n+"'", _a.responseText)}
-
      })
 }
+{{#is-list}}
+function moveUp(id){
+    $.ajax({
+            type: 'get',
+            url: "/list/{{list-id}}/up/"+id,
+            success : function(js){
+                list_root(_currentFilmId)
+                 var elem = $("#ul-"+id)
+                 elem.prev().before(elem)
+            },
+            error : function(_a, _b, _c) {error("Impossible de supprimer '"+n+"'", _a.responseText)}
+     })
+}
+
+function moveDown(id){
+    $.ajax({
+            type: 'get',
+            url: "/list/{{list-id}}/up/"+id,
+            success : function(js){
+                list_root(_currentFilmId)
+                 var elem = $("#ul-"+id)
+                 elem.next().after(elem)
+             },
+            error : function(_a, _b, _c) {error("Impossible de supprimer '"+n+"'", _a.responseText)}
+     })
+}
+{{/is-list}}
 
 function addTolist(id){
     $.ajax({
@@ -96,6 +138,22 @@ function addTolist(id){
      });
 }
 
+function removeFromlist(id, filmId){
+    if(filmId==undefined) filmId=_currentFilmId
+    $.ajax({
+            type: 'get',
+            url: "/list/"+id+"/remove/"+filmId,
+            success: function(jsonData){
+                list_root(_currentFilmId)
+                 M.toast({html: 'Film enlevé'})
+                 {{#is-list}}
+                 $("#ul-"+filmId).remove()
+                 {{/is-list}}
+            },
+            error : function(_a, _b, _c) {error("Impossible d'ajouter '"+_currentFilmId+"'", _a.responseText)}
+     });
+}
+
 function askDeleteList(id){
     modal("ask_delete")
     _toDelete=id
@@ -104,6 +162,7 @@ function askDeleteList(id){
 function show_list_root(n)
 {
     modal("list_main")
+    $("#it-list-filter").keyup(filter_list)
     list_root(n)
 }
 var test=null
@@ -118,16 +177,19 @@ function list_root(fid){
                 for(var key in jsonData){
                     var list=jsonData[key]
                     test=list
-                    var tr = $("<tr>")
-                    if(list.list.indexOf(""+fid)<0){
-                        tr.append($("<td><center>"+list.name+"</center></td>"))
-                        tr.append($("<td><center>"+list.list.length+"</center></td>"))
-                        tr.append($('<td><center><i class="material-icons" onclick="addTolist(\''+list.id+'\')">add</i>'+
-                                        '<i class="material-icons" onclick="askDeleteList(\''+list.id+'\')">cancel</i>'+
-                                        '</center></td>'))
-                        obj.append(tr)
-                    }
+                    var tr = $("<tr data-value=\""+list.name+"\">")
+                    var isInclude = (list.list.indexOf(""+fid)>=0)
+                    tr.append($("<td><center><a href=\"/showlist/"+list.id+"/\">"+list.name+"</a></center></td>"))
+                    tr.append($("<td><center>"+list.list.length+"</center></td>"))
+                    tr.append($('<td><center>'+
+                            '<i class="material-icons" onclick="url(\'/showlist/'+list.id+'\')">edit</i>'+
+                            (isInclude?('<i class="material-icons" onclick="removeFromlist(\''+list.id+'\')">remove</i>'):
+                                ('<i class="material-icons" onclick="addTolist(\''+list.id+'\')">add</i>'))+
+                            '<i class="material-icons" onclick="askDeleteList(\''+list.id+'\')">cancel</i>'+
+                            '</center></td>'))
+                    obj.append(tr)
                 }
+                filter_list();
             },
             error : function(_a, _b, _c) {error("Impossible d'afficher '"+fid+"'", _a.responseText)}
      });

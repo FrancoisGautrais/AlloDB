@@ -1,6 +1,6 @@
 
 from . import log
-from .socketwrapper import SocketWrapper, ServerSocket
+from .socketwrapper import SocketWrapper, ServerSocket, DisconnectException
 from .httprequest import HTTPResponse, HTTPRequest, HTTP_OK, STR_HTTP_ERROR, HTTP_NOT_FOUND
 from .utils import Callback, start_thread
 import os
@@ -52,7 +52,7 @@ class HTTPServer(ServerSocket):
 
             self.handlerequest(req, res)
             res.write(req.get_socket())
-            req.get_socket().close()
+            #req.get_socket().close()
 
             req.stop_time = time.time()
             req.total_time = req.stop_time - req.start_time

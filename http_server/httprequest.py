@@ -346,7 +346,7 @@ class HTTPResponse(_HTTP):
         elif typ==BODY_STRING:
             out=bytes(self.body, "utf8")
         else: out=bytes()
-
+        self.header("Connection", "close")
         self.header("Content-Length", len(out))
         try:
             soc.send(fromutf8(self.version + " " + str(self.code) + " " + self.msg + "\r\n"))

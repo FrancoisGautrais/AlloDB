@@ -4,6 +4,26 @@ import utils
 from allodbrow import DbRow
 from resultset import ResultSet
 
+class AlloListSet(ResultSet):
+
+    def set_list(self, db, listid, listname, list):
+        self.listid=listid
+        self.name=listname
+        self.list=list
+        for x in self.list:
+            self.put(db.ids[x])
+        return self.close()
+
+    def moustache(self, base={}):
+        return utils.dictassign(ResultSet.moustache(self, base),{
+            "name" : self.name,
+            "list-id" : self.listid,
+            "is-list" : True
+        })
+
+
+
+
 class AlloList:
     def __init__(self, js={}, name=""):
         self.id = js["id"] if js else utils.new_id()
@@ -11,10 +31,7 @@ class AlloList:
         self.list=js["list"] if js else []
 
     def result_set(self, db, order_type=[], order=[]):
-        rs = ResultSet(db, order_type, order)
-        for x in self.list:
-            rs.put(db.ids[x])
-        return rs.close()
+        return AlloListSet(db, order_type, order).set_list(db, self.id, self.name, self.list)
 
     def remove(self, idfilm):
         self.list.remove(idfilm)
@@ -56,10 +73,4 @@ class AlloList:
             "list" : self.list,
             "name" : self.name
         }
-
-    def json_set(self, db):
-        x=self.result_set(db).moustache()
-        x["name"]=self.name
-        x["list-id"]=self.id
-        return x
 

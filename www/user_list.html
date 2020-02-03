@@ -1,0 +1,180 @@
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Listes utilisateurs</title>
+
+</head>
+
+<style>
+main {
+    padding-top: 0px ! important;
+}
+
+.filter-div > input {
+    position: absolute;
+    width: calc(100% - 48px) ! important;
+}
+
+.filter-div > i {
+    position: absolute;
+    top: 10px;
+    right: 0px;
+    font-size: 32px;
+}
+
+.filter-div {
+    margin-bottom: 40px;
+}
+
+</style>
+
+<div class="card darken-1 modal" id="ask_delete">
+    <div class="card-content">
+        <center><span class="card-title" >Supprimer</span></center>
+    </div>
+    <div class="card-action row">
+
+        <a class="btn fond-color-1 color-4 col  s6" onclick="confirmDelete(_toDelete)">Supprimer</a>
+        <a class="btn fond-color-2 color-4 col  s6" onclick="modalClose('ask_delete')">Annuler</a>
+    </div>
+</div>
+
+<body>
+
+
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/index.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+    <#include("www/gen/header.html")>
+
+
+    <main>
+        <div class="container">
+            <div class="row">
+                <div class="input-field col s12 offset-m3 m6 filter-div">
+                        <input placeholder="Filtrer" id="it-list-filter" type="text">
+                        <label for="it-list-filter">Filtrer</label>
+                        <i class="material-icons" onclick="new_list()">add</i>
+                    </div>
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><center>Nom</center></th>
+                            <th><center>#</center></th>
+                            <th><center>Actions</center></th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="list_root">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+
+
+
+
+    <#include("www/gen/footer.html")>
+
+    <script>
+var _toDelete=null
+function filter_list()
+{
+    var list=$("#it-list-filter").val().toLowerCase()
+    console.log("->'"+list+"'")
+    $("#list_root").find("tr").each(function (i, x){
+        x=$(x)
+        var v = x.attr("data-value")
+        if(v.toLowerCase().search(list)>=0){
+            x.show()
+        } else {
+            x.hide()
+        }
+    })
+}
+
+function new_list()
+{
+    var obj = $("#it-list-filter")
+    var name = obj.val()
+    $.ajax({
+            type: 'get',
+            url: "/list/create/"+name,
+            success : function(js){
+                list_root()
+                 M.toast({html: 'Liste "'+name+'" crée'})
+                 obj.val("")
+            },
+            error : function(_a, _b, _c) {error("Impossible de créer '"+name+"'", _a.responseText)}
+
+     })
+}
+
+function confirmDelete(n){
+   modalClose("ask_delete")
+   $.ajax({
+            type: 'get',
+            url: "/list/"+n+"/remove",
+            success : function(js){
+                modalClose("ask_delete")
+                list_root()
+                 M.toast({html: 'Liste supprimée'})
+            },
+            error : function(_a, _b, _c) {error("Impossible de supprimer '"+n+"'", _a.responseText)}
+     })
+}
+
+
+function askDeleteList(id){
+    modal("ask_delete")
+    _toDelete=id
+}
+
+function show_list_root(n)
+{
+    modal("list_main")
+    $("#it-list-filter").keyup(filter_list)
+    list_root(n)
+}
+var test=null
+function list_root(){
+    $.ajax({
+            type: 'get',
+            url: "/list",
+            success: function(jsonData){
+                var obj = $("#list_root")
+                obj.empty()
+                for(var key in jsonData){
+                    var list=jsonData[key]
+                    test=list
+                    var tr = $("<tr data-value=\""+list.name+"\">")
+                    tr.append($("<td><center><a href=\"/showlist/"+list.id+"/\">"+list.name+"</a></center></td>"))
+                    tr.append($("<td><center>"+list.list.length+"</center></td>"))
+                    tr.append($('<td><center>'+
+                            '<i class="material-icons" onclick="url(\'/showlist/'+list.id+'\')">edit</i>'+
+                            '<i class="material-icons" onclick="askDeleteList(\''+list.id+'\')">cancel</i>'+
+                            '</center></td>'))
+                    obj.append(tr)
+                }
+                filter_list();
+            },
+            error : function(_a, _b, _c) {error("Impossible d'afficher la liste", _a.responseText)}
+     });
+}
+$(document).ready(function(){
+    $("#it-list-filter").keyup(filter_list)
+    list_root();
+})
+    </script>
+</body>
+
+</html>

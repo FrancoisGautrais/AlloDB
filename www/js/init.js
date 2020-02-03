@@ -90,6 +90,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function url(x){window.location.href=x}
+function ajaxget(url, success=null, error=null){
+    $.ajax({
+        type: "get",
+        url: url,
+        success: success,
+        error: error
+    })
+}
 
 $(document).ready(function(){
     autoreplaceall()

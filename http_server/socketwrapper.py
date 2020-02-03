@@ -7,6 +7,11 @@ import time
 
 from . import log
 
+class DisconnectException(Exception):
+
+    def __init__(self):
+        Exception.__init__(self)
+
 
 class SocketWrapper:
     def __init__(self, llsocket):
@@ -15,6 +20,7 @@ class SocketWrapper:
         self.buffer=bytearray()
         self._recieved=bytearray()
         self._sent=bytearray()
+        self.closed=False
 
 
 
@@ -47,8 +53,11 @@ class SocketWrapper:
             while bytes_recd < l:
                 chunk = self._socket.recv(min(l - bytes_recd, 2048))
                 if chunk == b'':
-                    self.dump_recevied()
-                    raise Exception("socket connection broken, bytes left : "+str(l-bytes_recd), "chucks = ", base)
+                    log.error("Connection problème here")
+                    self.close()
+                    raise DisconnectException
+                #    #self.dump_recevied()
+                #    #raise Exception("socket connection broken, bytes left : "+str(l-bytes_recd), "chucks = ", base)
                 base+=chunk
                 bytes_recd = bytes_recd + len(chunk)
         return bytes(base)
@@ -72,14 +81,11 @@ class SocketWrapper:
         self.buffer+=b
 
     def close(self):
-        try:
-            self._socket.shutdown(socket.SHUT_WR)
-            return self._socket.close()
-        except:
-            return None
+        #self._socket.shutdown(socket.SHUT_WR)
+        self._socket.close()
+        self.closed=True
 
-
-
+        return self._socket.close()
 
 
 class ServerSocket(SocketWrapper):

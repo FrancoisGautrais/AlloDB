@@ -42,8 +42,6 @@ class User:
             self.db[x]=js[x]
         self.save()
 
-
-
     def json(self):
         js={}
         js["name"]=self.name
@@ -100,6 +98,7 @@ class User:
     def add_to_list(self, filmid, listid):
         if not listid in self.lists: return False
         if not (filmid in self.db): self.db[filmid]=emptyrow()
+        if not "lists" in self.db[filmid]: self.db[filmid]["lists"]=[]
         self.db[filmid]["lists"].append(listid)
         self.lists[listid].list.append(filmid)
         return True

@@ -1,12 +1,15 @@
 import json
 import os
 import time
+
+import filmfinder
 from allolist import AlloList
 import uuid
 from urllib.parse import unquote_plus
 import config
 from allodb import DB
 import user
+from http_server.httpserver import HTTPServer
 from http_server.restserver import RESTServer, HTTPRequest, HTTPResponse
 from http_server import log, utils
 from http_server.filecache import  filecache
@@ -104,15 +107,24 @@ class Request:
 
 class AlloServer(RESTServer):
     RESULT_PER_PAGE=10
+
+    SHORT_REQUESTS={
+        "toseeagain" : ("select * where tosee = True and seen = True order by note desc", "A revoir"),
+        "tosee"  : ("select * where tosee = True and seen != True order by note desc", "A voir"),
+        "seen"  : ("select * where seen = True order by note desc", "Vus")
+    }
+
     def __init__(self, user):
-        RESTServer.__init__(self)
+        RESTServer.__init__(self, attrs={"mode" : HTTPServer.SPAWN_THREAD})
         self.requests={}
         self.user = user
         self.db = DB.fromjson("db.json", self.user)
         self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
         self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html")))
+        self.route("GET", "/userlist", lambda req, res: res.serve_file_gen(config.www("user_list.html")))
         self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html")))
         self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html")))
+        self.route("GET", "/save", lambda req, res: self.db.userdata.save())
         self.route("POST", "/import", self.handle_import)
         self.route("GET", "/export", self.handle_export)
         self.route("GET", "/director/#id", self.handle_director)
@@ -122,16 +134,36 @@ class AlloServer(RESTServer):
         self.route("GET", "/results/#id/#page", self.handle_results)
         self.route("POST", "/results", self.handle_results)
 
+        self.route("GET", "/showlist/#id", self.handle_show_list)
+        self.route("GET", "/showlist/#id/#page", self.handle_show_list)
+
+        self.route("GET", "/short/#id", self.handle_short)
+
+        self.route("GET", "/searchfilm/#id", self.handle_search_film)
+
         self.route("GET", "/list", self.handle_list_all)
         self.route("GET", "/list/create/#name", self.handle_list_create)
         self.route("GET", "/list/#idl", self.handle_list_get)
         self.route("GET", "/list/#idl/remove", self.handle_list_remove)
+        self.route("GET", "/list/#idl/rename/#name", self.handle_list_rename)
         self.route("GET", "/list/#idl/add/#idfilm", self.handle_list_add)
         self.route("GET", "/list/#idl/up/#idfilm", self.handle_list_up)
         self.route("GET", "/list/#idl/down/#idfilm", self.handle_list_down)
         self.route("GET", "/list/#idl/remove/#idfilm", self.handle_list_remove_item)
 
+
         self.static("/", config.WWW_DIR)
+
+    def handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
+        id=req.params["id"]
+        if str(id) in self.db.ids:
+            row=self.db.ids[str(id)]
+            year=row.resolve("year")
+            if not year or year<=1900: year=None
+            title=row.resolve("name")
+            res.end(filmfinder.find_film(title, year), "application/json")
+        else: res.serve404()
+
 
     def handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
         x=self.db.userdata.list_json()
@@ -162,19 +194,33 @@ class AlloServer(RESTServer):
         idfilm = req.params["idfilm"]
         if not self.db.userdata.add_to_list(idfilm, id):
             res.serve404()
+        else: self.db.userdata.save()
 
     def handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
         id = req.params["idl"]
         idfilm = req.params["idfilm"]
         x = self.db.userdata.list_get_by_id(id)
-        if x: x.up(idfilm)
+        if x:
+            x.up(idfilm)
+            self.db.userdata.save()
         else: res.serve404()
 
     def handle_list_down(self, req: HTTPRequest, res: HTTPResponse):
         id = req.params["idl"]
         idfilm = req.params["idfilm"]
         x = self.db.userdata.list_get_by_id(id)
-        if x: x.down(idfilm)
+        if x:
+            x.down(idfilm)
+            self.db.userdata.save()
+        else: res.serve404()
+
+    def handle_list_rename(self, req: HTTPRequest, res: HTTPResponse):
+        id = req.params["idl"]
+        name = req.params["name"]
+        x = self.db.userdata.list_get_by_id(id)
+        if x:
+            x.name=name
+            self.db.userdata.save()
         else: res.serve404()
 
     def handle_list_remove_item(self, req: HTTPRequest, res: HTTPResponse):
@@ -202,7 +248,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache())
+        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : id}))
 
     def handle_import(self, req: HTTPRequest, res: HTTPResponse):
         f=req.multipart_next_file()
@@ -221,11 +267,11 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache())
+        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : id}))
 
 
     def handle_film(self, req: HTTPRequest, res: HTTPResponse):
-        id=int(req.params["id"])
+        id=req.params["id"]
         if not id in self.db.ids: return res.serve404()
         path = config.www("film.html")
         tmp = Request(self.db.row_from_id(id))
@@ -248,6 +294,33 @@ class AlloServer(RESTServer):
 
         row.set(out)
 
+
+    def handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
+        path = config.www("results.html")
+        page = 0
+        pagesize = AlloServer.RESULT_PER_PAGE
+        if "page" in req.params: page=int(req.params["page"]-1)
+        id = req.params["id"]
+        if id in self.db.userdata.lists:
+            tmp=Request(self.db.userdata.lists[id].result_set(self.db))
+            x=tmp.result
+            x.pagesize = 50
+            self.requests[x.listid]=tmp
+            x.page=page
+
+            self._check_query(req, x)
+            res.serve_file_gen(path, x.moustache({"user_list": self.db.userdata.list_json()}))
+        else:
+            res.serve404()
+
+    def handle_short(self, req : HTTPRequest, res : HTTPResponse):
+        path = config.www("results.html")
+        short=AlloServer.SHORT_REQUESTS[req.params["id"]]
+        tmp = Request(self.db.execute(short[0]))
+        x = tmp.result
+        x.pagesize = 10
+        self.requests[x.id] = tmp
+        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : short[1]}))
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")

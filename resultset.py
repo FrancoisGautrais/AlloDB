@@ -4,6 +4,8 @@ import time
 import uuid
 from functools import cmp_to_key
 
+import utils
+
 
 def sortkey(a, b, key, coef):
     a = a[key]
@@ -28,7 +30,7 @@ class ResultSet:
 
     def __init__(self, db, col=[], order=[], set=None, pagesize=-1, page=0):
         self.db=db
-        self.id=str(uuid.uuid4())
+        self.id=utils.new_id()
         self.start_time=time.time()
         self.process_time=0
         self.order=order
@@ -43,7 +45,7 @@ class ResultSet:
         for x in self.data:
             arr.append(x.json(self.columns))
 
-        out=  {
+        return utils.dictassign({
             "count" : len(self.data),
             "time" : int(self.process_time*1000)/1000,
             "data" : arr if self.pagesize<=0 else arr[self.page*self.pagesize:(self.page+1)*self.pagesize],
@@ -52,11 +54,7 @@ class ResultSet:
             "id" : self.id,
             "npages" : 1 if self.pagesize<=0 else (int(len(self.data)/self.pagesize)+ (1 if len(self.data)%self.pagesize>0 else 0)),
             "payslist": alloimport.ID_TO_PAYS
-        }
-
-        for x in base:
-            out[x]=base[x]
-        return out
+        }, base)
 
     def close(self):
         if self.order and len(self.order)>0:
