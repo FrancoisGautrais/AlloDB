@@ -48,10 +48,11 @@ main {
                         {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                         Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}}<br>
                         {{note}}/5 (parmi {{nnote}}) {{nreview}} critiques</p>
-                        <a href="http://www.allocine.fr/film/fichefilm_gen_cfilm={{id}}.html"> Allociné </a>
-                        <a href="/searchfilm/{{id}}"> Rechercher </a>
                         <h3>Synopsis</h3>
                         <p>{{description}}</p>
+
+                        <a onclick="show_download({{id}})" class="btn fond-color-3 color-4">Télécharger</a>
+                        <a href="http://www.allocine.fr/film/fichefilm_gen_cfilm={{id}}.html" class="btn fond-color-3 color-4">Allocine</a>
                         <div class="row">
 
                             <span class="input-field inline-cb col s4">
@@ -77,13 +78,16 @@ main {
                         </div>
                         <a onclick="save_desc()" class="btn fond-color-2 color-4">Enregistrer</a>
                     </div>
-
                 </div>
             </div>
         </div>
     </main>
 
+    <#include("www/gen/find_download.html")>
     <#include("www/gen/footer.html")>
+
+
+
 
     <script>
     var FILM_ID={{id}}
@@ -116,6 +120,7 @@ main {
         _change_value({ comment : text, ownnote: parseFloat($("#t_note").val()) })
     }
 
+
     $( document ).ready(function(){
         $("#cb_seen").prop("checked", <#jsbool({{seen}})>)
         $("#cb_to_see").prop("checked", <#jsbool({{tosee}})>)
@@ -126,8 +131,6 @@ main {
         $("#cb_seen").change(function(a){ seen_changed($(a.currentTarget).is(':checked')) })
         $("#cb_to_see").change(function(a){ to_see_changed($(a.currentTarget).is(':checked')) })
         $("#t_note").change(function(a){ ownnote_change(parseFloat($("#t_note").val())) })
-
-
     });
 
 

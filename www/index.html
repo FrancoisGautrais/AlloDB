@@ -19,10 +19,7 @@
                 <center><h1>Recherche</h1></center>
 
                 <form id="root-widget" action="/results" method="post">
-                    <!--<div class="input-field col offset-s2 s8 offset-m4 m4 ">
-                        <input id="it-match" type="text" name="match" class="validate">
-                        <label for="it-match">Texte à recrecher</label>
-                    </div>-->
+
                     <#row(input_text("widget-it-match", "Texte à recrecher", "text", "Filtrer le titre", 0, "match"))>
 
                     <#row(
@@ -38,32 +35,41 @@
                             "fr", "français", "us", "U.S.A.", "uk", "britannique", "it", "italien", "es", "espagnol", "be", "belge", "hk", "hong-kongais", "jp", "japonais", "ie", "irlandais", "de", "allemand", "ru", "russe", "af", "afghan", "al", "albanais", "dz", "algérien", "ad", "andorran", "ao", "angolais", "ag", "antiguais", "ar", "argentin", "am", "arménien", "au", "australien", "at", "autrichien", "az", "azerbaïdjanais", "bs", "bahaméen", "bh", "bahreini", "bb", "barbadien", "bz", "belizien", "bm", "Bermudien", "bt", "bhoutanais", "bo", "bolivien", "ba", "bosniaque", "bw", "botswanais", "br", "brésilien", "bg", "bulgare", "bf", "burkinabé", "bi", "burundais", "bj", "béninois", "kh", "cambodgien", "cm", "camerounais", "ca", "Québecois", "cf", "centrafricain", "cl", "chilien", "cn", "chinois", "cy", "chypriote", "co", "colombien", "cg", "congolais", "kr", "sud-coréen", "cr", "Costaricain", "hr", "croate", "cu", "cubain", "dk", "danois", "dj", "djiboutiens", "dm", "dominicain", "ee", "estonien", "fi", "finlandais", "ga", "gabonais", "gh", "ghanéen", "gr", "grec", "gt", "guatémaltèque", "gn", "guinéen", "ge", "géorgien", "ht", "haïtien", "hn", "hondurien", "hu", "hongrois", "in", "indien", "id", "indonésien", "iq", "Irakien", "ir", "iranien", "is", "islandais", "il", "israélien", "ci", "ivoirien", "jm", "jamaïcain", "jo", "jordanien", "kz", "kazakh", "ke", "Kenyan", "kg", "kirghiz", "kw", "kowetien", "la", "laotien", "lv", "letton", "lb", "libanais", "ly", "libyen", "lr", "libérien", "li", "liechtensteinois", "lt", "lituanien", "lu", "luxembourgeois", "mk", "macédonien", "my", "malaisien", "mw", "malawites", "mg", "malgache", "ml", "malien", "mt", "maltais", "ma", "marocain", "mu", "mauriciens", "mr", "mauritanien", "mx", "mexicain", "md", "moldave", "mc", "Monegasque", "mn", "mongol", "me", "monténégrin", "mz", "mozambiquais", "na", "namibien", "ni", "nicaraguéen", "ne", "nigérian", "ng", "nigérien", "kp", "nord-coréen", "no", "norvégien", "nl", "néerlandais", "nz", "néo-zélandais", "np", "népalais", "ug", "ougandais", "uz", "ouzbek", "pk", "pakistanais", "ps", "palestinien", "pa", "panaméen", "pg", "papouan-néo guinéen", "py", "paraguayen", "ph", "philippin", "pl", "polonais", "pr", "portoricain", "pt", "portugais", "pe", "péruvien", "qa", "qatarien", "ro", "roumain", "rw", "rwandais", "sa", "saoudien", "rs", "serbe", "sl", "sierra-léonais", "sg", "singapourien", "sk", "slovaque", "si", "slovène", "so", "somalien", "sd", "soudanais", "su", "soviétique", "lk", "sri-lankais", "za", "sud-africain", "ch", "suisse", "sr", "surinamien", "se", "suédois", "sz", "swazi", "sy", "syrien", "sn", "sénégalais", "tj", "tadjik", "tz", "tanzanien", "tw", "taïwanais", "td", "tchadien", "cz", "tchécoslovaque", "th", "thaïlandais", "tg", "togolais", "to", "tongien", "tt", "trinidadiens", "tn", "tunisien", "tr", "turc", "tm", "turkmène", "ua", "ukrainien", "uy", "uruguayen", "vn", "vietnamien", "ve", "vénézuélien", "yu", "yougoslave", "ye", "yéménite", "zm", "zambien", "eg", "égyptien", "ec", "équatorien", "et", "éthiopien"
                         ), "pays"), "col s8"),
                         col(select("widget-s-pays-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "pays-op"), "col s4")))>
+
                     <#row(list(
                         col(input_text("widget-itf-note-min", "", "number", "Note min", 0, "note-min"), "col s6"),
                         col(input_text("widget-itf-note-max", "", "number", "Note max", 0, "note-max"), "col s6")
                     ))>
+
                     <#row(list(
                         col(input_text("widget-itn-duration-min", "", "number", "Durée (minute) min", 0, "duration-min"), "col s6"),
                         col(input_text("widget-itn-duration-max", "", "number", "Durée (minute) max", 0, "duration-max"), "col s6")
                     ))>
+
                     <#row(input_text("widget-it-actor", "Filtrer par acteur", "text", "Filtrer par acteur", 0, "actor"))>
+
                     <#row(input_text("widget-it-director", "Filtrer par réalisateur", "text", "Filtrer par réalisateur", 0, "director"))>
+
                     <#row(list(
                         col(input_text("widget-itn-year-min", "", "number", "Année min", 0, "year-min"), "col s6"),
                         col(input_text("widget-itn-year-max", "", "number", "Année max", 0, "year-max"), "col s6")
                     ))>
+
                     <#row(list(
                         col(input_text("widget-itn-nnote-min", "", "number", "# de note min", 0, "nnote-min"), "col s6"),
                         col(input_text("widget-itn-nnote-max", "", "number", "# de note max", 0, "nnote-max"), "col s6")
                     ))>
+
                     <#row(list(
                         col(input_text("widget-itn-nreview-min", "", "number", "# de critiques min", 0, "nreview-min"), "col s6"),
                         col(input_text("widget-itn-nreview-max", "", "number", "# de critiques max", 0, "nreview-max"), "col s6")
                     ))>
+
                     <#row(list(
                             col(select("widget-sb-tosee", "Marqué à voir", objl("", "", "True", "Oui", "False", "Non"), "tosee"), "col s6"),
                             col(select("widget-sb-seen", "Marqué déja vu", objl("", "", "True", "Oui", "False", "Non"), "seen"), "col s6")
                     )))>
+
                     <#row(list(
                             col(select("widget-s-order", "Trié par", objl(
                                 "", "",
@@ -75,15 +81,21 @@
                                 "nnote", "# note",
                                 "nreview", "# critique",
                                 "tosee", "Marqué à voir",
-                                "seen", "Marqué vu"
+                                "seen", "Marqué vu",
+                                "id", "ID"
                                 ), "order"
                             ), "col s8"),
                             col(select("widget-s-order-sort", "Marqué déja vu", objl("asc", "Croissant", "desc", "Décroissant"), "order-sort"), "col s4")
                     )))>
+
                     <#row(input_text("widget-itn-rand", "", "number", "Tirer des résultats au hazard", 0, "rand"))>
-                    <#row(select("widget-s-nperpage", "Résultats par page", objl("10", "10", "50", "50", "100", "100"))))>
 
-
+                    <#row(select("widget-s-nperpage", "Résultats par page", objl(
+                        "10", "10",
+                        "20", "20",
+                        "50", "50",
+                        "100", "100",
+                        "-1", "Tous"))))>
 
                     <div class="col offset-s4 s4 offset-m4 m4 row">
                         <a onclick="send_request()" class="btn fond-color-2 color-4">Envoyer</a>

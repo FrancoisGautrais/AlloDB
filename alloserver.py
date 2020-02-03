@@ -234,6 +234,9 @@ class AlloServer(RESTServer):
             type=req.query["type"]
             order=req.query["order"] if "order" in req.query else ""
             query.sort(type, order!="desc")
+        if "pagesize" in req.query:
+            query.pagesize=int(req.query["pagesize"])
+            query.page=0
 
     def handle_export(self, req: HTTPRequest, res: HTTPResponse):
         self.db.userdata.save()

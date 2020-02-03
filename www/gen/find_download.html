@@ -1,0 +1,52 @@
+<div class="card darken-1 modal" id="find_download">
+    <div class="card-content">
+        <center><span class="card-title" >Télécharger</span></center>
+    </div>
+    <div class="card-action row">
+       <table>
+            <thead>
+                <tr>
+                    <th>Site</th>
+                    <th>Nom</th>
+                    <th>Année</th>
+                </tr>
+            </thead>
+
+                <tbody id="download_body">
+
+                </tbody>
+            </table>
+    </div>
+</div>
+
+<script>
+
+    function show_download(id){
+        body=$("#download_body")
+        body.empty()
+        modal("find_download")
+        loading("Recherche en cours")
+        $.ajax({
+            type: "GET",
+            url: "/searchfilm/"+id+"",
+            success: function(data){
+                modalClose("loading")
+                if(data.length==0){
+                    M.toast({html: "Aucun résultats"});
+                    modalClose("find_download")
+                }else {
+                    for (var i in data){
+                        var res = data[i];
+                        var tr = $("<tr>")
+                        tr.append($("<td><a href=\""+res.url+"\">"+res.site+"</a></td>"))
+                        tr.append($("<td><a href=\""+res.url+"\">"+res.title+"</a></td>"))
+                        tr.append($("<td>"+res.year+"</td>"))
+                        body.append(tr)
+                    }
+                }
+
+             },
+            error: function(data, err){ M.toast({html: 'Erreur : '+err}); modalClose("find_download") }
+        });
+    }
+</script>

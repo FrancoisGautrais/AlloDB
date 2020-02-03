@@ -2,6 +2,10 @@ import requests
 from lxml import etree
 import numpy as np
 
+import log
+import utils
+
+
 def xrange(*x):
 
     return iter(range(*x))
@@ -84,19 +88,19 @@ class FilmFinder:
 
 
 class ZoneTelechargementFinder(FilmFinder):
+    HEAD = {
+        "Host": "www.zone-telechargement2.vip",
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "https://www.zone-telechargement2.vip",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Referer": "https://www.zone-telechargement2.vip/",
+    }
     def do_find(self):
-        head={
-            "Host": "www.zone-telechargement2.vip",
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0",
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3",
-            "Content-Type": "application/x-www-form-urlencoded",
-            "Origin": "https://www.zone-telechargement2.vip",
-            "DNT": "1",
-            "Connection": "keep-alive",
-            "Referer": "https://www.zone-telechargement2.vip/",
-        }
-        req = requests.post("http://www.zone-telechargement2.vip/index.php?do=search", "do=search&subaction=search&search_start=0&full_search=1&result_from=1&story="+self.title+"&titleonly=0&searchuser=&replyless=0&replylimit=0&searchdate=0&beforeafter=after&sortby=date&resorder=desc&showposts=1&catlist%5B%5D=2&user_hash=636b4560bb73a51b506836d8293f5770506a68d0", headers=head)
+        req = requests.post("http://www.zone-telechargement2.vip/index.php?do=search", "do=search&subaction=search&search_start=0&full_search=1&result_from=1&story="+utils.urlencode(self.title)+"&titleonly=0&searchuser=&replyless=0&replylimit=0&searchdate=0&beforeafter=after&sortby=date&resorder=desc&showposts=1&catlist%5B%5D=2&user_hash=636b4560bb73a51b506836d8293f5770506a68d0", headers=ZoneTelechargementFinder.HEAD)
         dom = etree.HTML(req.content)
         out=[]
         for elem in (dom.xpath('//div[@class="mov"]')):
@@ -113,8 +117,7 @@ class ZoneTelechargementFinder(FilmFinder):
         return out
 
 class LiberttVfFinder(FilmFinder):
-    def do_find(self):
-        head={
+    HEAD={
             "Host" : "libertyvf.tv",
             "User-Agent" : "Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0",
             "Accept" : "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -128,10 +131,9 @@ class LiberttVfFinder(FilmFinder):
             "Cache-Control" : "no-cache",
             "TE" : "Trailers"
         }
-        req = requests.post("https://libertyvf.tv/v2/recherche/", "categorie=films&mot_search="+self.title, headers=head)
+    def do_find(self):
+        req = requests.post("https://libertyvf.tv/v2/recherche/", "categorie=films&mot_search="+utils.urlencode(self.title), headers=LiberttVfFinder.HEAD)
         dom = etree.HTML(req.content)
-        with open("index.html", "wb") as f:
-            f.write(req.content)
         out=[]
         for elem in (dom.xpath('//div[@class="bloc-generale"]')):
             if elem.findall('h2'):
@@ -139,9 +141,9 @@ class LiberttVfFinder(FilmFinder):
                 f.title=elem.findall('h2/a')[0].text[13:]
                 f.url=elem.findall('h2/a')[0].get("href")
                 f.year=int(elem.xpath(".//a[contains(@href, 'https://libertyvf.tv/films/annee/')]")[0].text[8:])
-                #f.url=elem.findall('a[@class="mov-t nowrap"]')[0].get("href")
                 out.append(f)
         return out
+
 
 FINDERS=[LiberttVfFinder, ZoneTelechargementFinder]
 

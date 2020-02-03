@@ -44,11 +44,16 @@ function on_send_sort()
 {
     var type =  $("input:radio[name ='group1']:checked").data("value")
     var order =  $("input:radio[name ='group2']:checked").data("value")
+    var npp =  $("input:radio[name ='group3']:checked").data("value")
 
     if(type){
         var query = "type="+type
         if(order!="") query+="&order="+order
         url='/results/<#get("id")>/<#add(get("page"),1)>?'+query
+        if(npp!="") url+="&pagesize="+npp
+        window.location.href=url
+    }else if (npp!=""){
+        url='/results/<#get("id")>/<#add(get("page"),1)>?'+"pagesize="+npp
         window.location.href=url
     }
 }
@@ -66,6 +71,14 @@ $(document).ready(function(){
         lbl=$("[data-value='"+ $("input:radio[name ='group2']:checked").data("value")+"']").parent().find("span").text()
         $("#button_sort_order").text(lbl)
      })
+
+    $("#form_nperpage").find("input").change(function(){
+        modalClose("nperpage")
+        lbl=$("[data-value='"+ $("input:radio[name ='group3']:checked").data("value")+"']").parent().find("span").text()
+        $("#button_nperpage").text(lbl)
+     })
+
+
 })
 
 </script>
@@ -77,9 +90,11 @@ $(document).ready(function(){
             <div class="autoreplace" data-type="menupath" data-value="{{path}}"></div>
         </ul>
         Trier par
-        <a class="waves-effect waves-light btn fond-color-2" id="button_sort_type" onclick="modal('sort_type')">Trier par</a>
+        <a class="waves-effect waves-light btn fond-color-2" id="button_sort_type" onclick="modal('sort_type')">Aucun</a>
         Ordre
         <a class="waves-effect waves-light btn fond-color-2"  id="button_sort_order" onclick="modal('sort_order')">Croissant</a>
+        Résultats par page
+        <a class="waves-effect waves-light btn fond-color-2"  id="button_nperpage" onclick="modal('nperpage')">Garder</a>
         <a class="waves-effect waves-light btn fond-color-3" onclick="on_send_sort()">Trier</a>
     </span>
 </nav>
@@ -133,6 +148,12 @@ $(document).ready(function(){
                     <span>Note personnelle</span>
                 </label>
             </p>
+            <p>
+                <label>
+                    <input name="group1" type="radio" data-value="id" />
+                    <span>ID</span>
+                </label>
+            </p>
 
         </form>
     </div>
@@ -155,6 +176,53 @@ $(document).ready(function(){
                 <label>
                     <input name="group2" type="radio" data-value="desc" />
                     <span>Décroissant</span>
+                </label>
+            </p>
+        </form>
+    </div>
+</div>
+
+
+<div class="card darken-1 modal" id="nperpage">
+    <div class="card-content">
+        <center><span class="card-title" >Résultats par page</span></center>
+    </div>
+    <div class="card-action row">
+       <form action="#" id="form_nperpage">
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="" checked/>
+                    <span>Garder</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="10"/>
+                    <span>10</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="20" />
+                    <span>20</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="50" />
+                    <span>50</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="100" />
+                    <span>100</span>
+                </label>
+            </p>
+            <p>
+                <label>
+                    <input name="group3" type="radio" data-value="-1" />
+                    <span>Tous</span>
                 </label>
             </p>
         </form>

@@ -45,6 +45,11 @@
     right: 0px;
 }
 
+.download-icon {
+    position: absolute;
+    margin-left: 5px;
+}
+
 </style>
 {{#is-list}}
 <center>
@@ -69,9 +74,9 @@
             </span>
         </a>
         <span class="custom-list-item second-line">
-            <a href="/film/{{id}}">
-                <div class="title-filename color-5">{{name}}</div>
-            </a>
+            <a href="/film/{{id}}" class="title-filename color-5">{{name}}</a>
+            <i onclick="show_download({{id}})" class="material-icons color-1 download-icon">file_download</i>
+
             <div class="subtitle-filename color-5">
                 <p> Sorti en {{year}}, <#minToStr({{duration}})>, {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                     De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
@@ -116,6 +121,7 @@
 
 {{/data}}
 
+<#include("www/gen/find_download.html")>
 
 <script>
 function _change_value(id, data){

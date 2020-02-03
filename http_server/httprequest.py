@@ -356,8 +356,8 @@ class HTTPResponse(_HTTP):
 
             soc.send(out)
         except Exception as err:
-            log.error(traceback.format_tb(limit=100))
-            log.error(traceback.format_exc(limit=100))
+            log.critical("Write error, \n================\nrecv:\n", self._recieved.decode(errors="replace")," \nsent:\n",
+                         soc.sent,"\n==========================")
 
 
     def serv(self, code, headers={}, data={}, file=None, filegen=None):
