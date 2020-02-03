@@ -13,7 +13,7 @@ from http_server.httpserver import HTTPServer
 from http_server.restserver import RESTServer, HTTPRequest, HTTPResponse
 from http_server import log, utils
 from http_server.filecache import  filecache
-
+from utils import dictassign, dictcopy
 
 def default(js, key, fct=None, default=None):
     x=js[key]
@@ -119,11 +119,11 @@ class AlloServer(RESTServer):
         self.requests={}
         self.user = user
         self.db = DB.fromjson("db.json", self.user)
-        self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html")))
-        self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html")))
-        self.route("GET", "/userlist", lambda req, res: res.serve_file_gen(config.www("user_list.html")))
-        self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html")))
-        self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html")))
+        self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
+        self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
+        self.route("GET", "/userlist", lambda req, res: res.serve_file_gen(config.www("user_list.html"), self.userlist_object()))
+        self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html"), self.userlist_object()))
+        self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html"), self.userlist_object()))
         self.route("GET", "/save", lambda req, res: self.db.userdata.save())
         self.route("POST", "/import", self.handle_import)
         self.route("GET", "/export", self.handle_export)
@@ -255,7 +255,8 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : id}))
+        print(self.userlist_object({"name" : id}))
+        res.serve_file_gen(path, x.moustache(self.userlist_object({"name" : id})))
 
     def handle_import(self, req: HTTPRequest, res: HTTPResponse):
         f=req.multipart_next_file()
@@ -274,7 +275,8 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : id}))
+        print(self.db.userdata.list_json())
+        res.serve_file_gen(path, x.moustache(self.userlist_object({ "name" : id})))
 
 
     def handle_film(self, req: HTTPRequest, res: HTTPResponse):
@@ -286,7 +288,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache())
+        res.serve_file_gen(path, x.moustache(self.userlist_object()))
 
     def handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
         id=req.params["id"]
@@ -301,6 +303,11 @@ class AlloServer(RESTServer):
 
         row.set(out)
 
+    def userlist_object(self, *args):
+        x=self.db.userdata.list_json()
+        l=[]
+        for i in x: l.append(i)
+        return dictassign({ "user_list" : x, "user_list_array" : l}, *args)
 
     def handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
@@ -316,7 +323,7 @@ class AlloServer(RESTServer):
             x.page=page
 
             self._check_query(req, x)
-            res.serve_file_gen(path, x.moustache({"user_list": self.db.userdata.list_json()}))
+            res.serve_file_gen(path, x.moustache(self.userlist_object()))
         else:
             res.serve404()
 
@@ -327,7 +334,7 @@ class AlloServer(RESTServer):
         x = tmp.result
         x.pagesize = 10
         self.requests[x.id] = tmp
-        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json(), "name" : short[1]}))
+        res.serve_file_gen(path, x.moustache(self.userlist_object({"name" : short[1]})))
 
     def handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
         type = req.params["type"]
@@ -360,7 +367,7 @@ class AlloServer(RESTServer):
                 return res.serve400()
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache({"user_list" : self.db.userdata.list_json()}))
+        res.serve_file_gen(path, x.moustache(self.userlist_object()))
 
 filecache.init()
 usr = None

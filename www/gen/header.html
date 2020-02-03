@@ -25,7 +25,19 @@
 }
 
 .nav-text {
-    font-size: 18px ! important;
+    font-size: 15px ! important;
+    height: 40px ! important;
+}
+
+.nav-text-little {
+    font-size: 12px ! important;
+    height: 30px ! important;
+    top: -5px ! important;
+}
+
+.navbar-item-little {
+    height: 30px ! important;
+    padding-left: 16px;
 }
 
 .header > .right {
@@ -44,44 +56,61 @@
     padding-right: 5px !important;
     width: calc( 100% - 10px) ! important;
 }
+
+.main-search {
+    top: -5px ! important;
+    position: absolute;
+    right: 5px;
+    float: right ! important;
+    width: 25%;
+}
+
+.main-search > input {
+    height: 32px ! important;
+}
+
+.main-search > i {
+    font-size: 40px ! important;
+    top: -4px ! important;
+}
+
 </style>
 
 
 <div class="header fond-color-1">
     <span data-target="slide-out" class="sidenav-trigger left color-4"><i class="material-icons menu-icon">menu</i></span>
     <center><a href="/" class="title color-4">Allo DB</a></center>
-    <!--<span class="right">
-        <a href="/aide.html"><i class="color-4 material-icons menu-icon">help</i></a>
-    </span>-->
-
+    <div class="input-field  main-search">
+        <i class="material-icons prefix color-4">search</i>
+        <input class="color-4 navbar-item autocomplete "
+               onkeyup="on_autocomplete_up($('#it-head-search'), 'name')"
+               type="text" id="it-head-search"/>
+        <label for="it-head-search">Recherche</label>
+    </div>
 </div>
 
 <ul id="slide-out" class="sidenav menu-text fond-color-1">
-    <li class="navbar-item"><div class="user-view"></li>
     <li><a  class="nav-text color-4" class="navbar-item" href="/">Accueil</a></li>
     <li>
-        <div class="input-field menu-input">
-            <input class="nav-text color-4 navbar-item autocomplete"
-                   onkeyup="on_autocomplete_up($('#it-head-search'), 'name')"
-                   type="text" id="it-head-search"/>
-            <label for="it-head-search">Recherche</label>
-        </div>
+
     </li>
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/request">Requête manuelle</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/index.html">Recherche avancée</a></li>
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/userlist">Listes</a></li>
+    {{#user_list_array}}
+    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a></li>
+    {{/user_list_array}}
     <li><div class="divider"></div></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/short/toseeagain">À revoir</a></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/short/tosee">À voir</a></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/short/seen">Vus</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4">Sélections</a></li>
+    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/toseeagain">À revoir</a></li>
+    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/tosee">À voir</a></li>
+    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/seen">Vus</a></li>
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/import">Importer</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/export">Exporter</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" onclick="ajaxget('/save')">Sauvegarder</a></li>
-
-
 </ul>
 
 <div class="card darken-1 modal fond-color-1" id="error">
@@ -191,7 +220,6 @@ function on_autocomplete_up(elem, type){
                 }
         })
     }
-
 }
 
 </script>

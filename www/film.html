@@ -30,6 +30,7 @@ main {
     <#include("www/gen/header.html")>
     <div class="const" id="CONST_PATH">{{path}}</div>
     <#include("www/gen/overlay.html")>
+    <#include("www/gen/list.html")>
 
     <script type="text/javascript" src="/js/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
@@ -47,14 +48,16 @@ main {
                         {{#genre}}{{.}} &nbsp;  {{/genre}}<br>
                         {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
                         Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/actor}}<br>
-                        {{note}}/5 (parmi {{nnote}}) {{nreview}} critiques</p>
+                        {{note}}/5 (parmi {{nnote}}) {{nreview}} critiques{{#lists}}<br>
+                        Listes: <a href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a>{{/lists}}
+                        </p>
                         <h3>Synopsis</h3>
                         <p>{{description}}</p>
 
                         <a onclick="show_download({{id}})" class="btn fond-color-3 color-4">Télécharger</a>
                         <a href="http://www.allocine.fr/film/fichefilm_gen_cfilm={{id}}.html" class="btn fond-color-3 color-4">Allocine</a>
+                        <a onclick="show_list_root({{id}})" class="btn fond-color-2 color-4">Ajouter à une liste</a>
                         <div class="row">
-
                             <span class="input-field inline-cb col s4">
                                 <label>
                                     <input type="checkbox"  id="cb_seen"/>

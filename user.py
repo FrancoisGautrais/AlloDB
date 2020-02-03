@@ -24,10 +24,16 @@ class User:
         elif js:
             self.name=js["name"]
             self.db=js["db"]
+            for x in self.db:
+                row=self.db[x]
+                if "lists" in row and "d5533acd" in row["lists"]:
+                    print("--------- here ---------")
+                    row["lists"].remove("d5533acd")
             if "lists" in js:
                 for x in js["lists"]:
                     self.lists[x]=AlloList(js=js["lists"][x])
             else: js["lists"]=[]
+            self.save()
 
     def changed(self): return self.change
 
@@ -66,7 +72,10 @@ class User:
         return None
 
     def list_remove(self, id):
-        if id in self.lists: del self.lists[id]
+        if id in self.lists:
+            for fid in self.lists[id].list.copy():
+                self.remove_to_list(fid, id)
+            del self.lists[id]
 
     def put(self, id, array):
         if len(array) != len(User.HEADS): raise Exception("Error bad sie of array to put")
