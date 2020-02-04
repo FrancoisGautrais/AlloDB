@@ -33,6 +33,10 @@ class User:
                 for x in js["lists"]:
                     self.lists[x]=AlloList(js=js["lists"][x])
             else: js["lists"]=[]
+            #self.remove_to_list(None, "7ac51d11")
+            for x in self.db:
+                if (not "lists" in self.db[x] or self.db[x]["lists"]==None):
+                    self.db[x]["lists"]=[]
             self.save()
 
     def changed(self): return self.change
@@ -113,10 +117,22 @@ class User:
         return True
 
     def remove_to_list(self, filmid, listid):
-        if not listid in self.lists: return False
-        self.db[filmid]["lists"].remove(listid)
+        """if not filmid:
+            for x in self.db:
+                self.remove_to_list(x, listid)
+            return
+
+        if listid in self.lists:
+            self.lists[listid].list.remove(filmid)
+        if "lists" in self.db[filmid] and listid in self.db[filmid]["lists"]:
+            self.db[filmid]["lists"].remove(listid)"""
         self.lists[listid].list.remove(filmid)
+        self.db[filmid]["lists"].remove(listid)
+
         return True
+
+
+
 
 
     def save(self):

@@ -201,7 +201,7 @@ class InExpr(BinaryExpr):
     def val(self, dico):
         f=self.first.val(dico)
         s=self.second.val(dico)
-        if f==None or s==None: raise TypeError("")
+        if f==None or s==None: return False
         if isinstance(s, str): return f.lower() in s.lower()
         if isinstance(s, list):
             if f in s:

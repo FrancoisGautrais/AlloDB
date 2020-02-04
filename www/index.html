@@ -51,6 +51,20 @@
 
                     <#row(input_text("widget-it-actor", "Filtrer par acteur", "text", "Filtrer par acteur", 0, "actor"))>
 
+                    <div class="row col s12">
+                        <div class="input-field col s8">
+                            <select multiple id="widget-it-userlist">
+                                {{#user_list_array}}
+                                    <option value="{{.}}"><#get("user_list", "{{.}}", "name")></option>
+                                {{/user_list_array}}
+                            </select>
+                            <label>Dans une liste</label>
+                        </div>
+                        <#col(select("widget-s-userlist-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "userlist-op"), "col s4")>
+                    </div>
+                    <#row(input_text("widget-it-director", "Filtrer par liste", "text", "Filtrer par réalisateur", 0, "director"))>
+
+
                     <#row(input_text("widget-it-director", "Filtrer par réalisateur", "text", "Filtrer par réalisateur", 0, "director"))>
 
                     <#row(list(

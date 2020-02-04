@@ -41,6 +41,13 @@ def json_to_request(x):
             tmp += (x["genre-op"] if i > 0 else "") + ' "' + unquote_plus(arr[i]) + '" in genre '
         l.append(tmp + ")")
 
+    if "userlist" in x and "userlist-op" in x and x["userlist"] != None and x["userlist-op"] != None:
+        tmp = "("
+        arr = x["userlist"]
+        for i in range(len(arr)):
+            tmp += (x["userlist-op"] if i > 0 else "") + ' "' + unquote_plus(arr[i]) + '" in lists '
+        l.append(tmp + ")")
+
     # 6 / 7 annee
     if "year-min" in x and "year-max" in x and x["year-min"]!=None and x["year-max"]!=None: l.append(' annee in range('+str(x["year-min"])+','+str(x["year-max"])+') ')
     elif "year-min" in x and x["year-min"]!=None: l.append(' year >= '+str(x["year-min"])+" ")
