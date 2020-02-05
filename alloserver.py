@@ -146,6 +146,9 @@ class AlloServer(RESTServer):
 
         self.route("GET", "/short/#id", self.handle_short)
 
+        self.route("POST", "/request/#name", self.handle_create_request)
+        self.route("DELETE", "/request/#name", self.handle_delete_request)
+
 
         self.route("GET", "/autocomplete/#type/#match", self.handle_autocomplete)
         self.route("GET", "/autocomplete/#type/#match/#max", self.handle_autocomplete)
@@ -314,7 +317,14 @@ class AlloServer(RESTServer):
         x=self.db.userdata.list_json()
         l=[]
         for i in x: l.append(i)
-        return dictassign({ "user_list" : x, "user_list_array" : l}, *args)
+
+        xr = self.db.userdata.requests
+        lr=[]
+        for i in xr: lr.append(i)
+        return dictassign({ "user_list" : x,
+                            "user_list_array" : l,
+                            "requests" : xr,
+                            "requests_list" : lr}, *args)
 
     def handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
@@ -376,6 +386,13 @@ class AlloServer(RESTServer):
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object()))
 
+    def handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
+        self.db.userdata.add_request(req.params["name"], req.body_json())
+        self.db.userdata.save()
+
+    def handle_delete_request(self, req: HTTPRequest, res: HTTPResponse):
+        self.db.userdata.delete_request(req.params["name"])
+        self.db.userdata.save()
 filecache.init()
 usr = None
 if os.path.exists(config.user("fanch")):

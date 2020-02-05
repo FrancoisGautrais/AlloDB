@@ -14,45 +14,111 @@
     <script type="text/javascript" src="/js/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
     <script type="text/javascript" src="/js/init.js"></script>
+    <script type="text/javascript" src="/js/search.js"></script>
     <#include("www/gen/header.html")>
+
+    <div class="card darken-1 modal" id="save_request">
+        <div class="card-content">
+            <center><span class="card-title" >Sauver la requête</span></center>
+        </div>
+        <div class="card-action row">
+            <#row(input_text("it-request", "Nom de la requete", "text", "Nom de la requete", 0, "match"))>
+            <a class="btn left fond-color-2" onclick="confirmSaveRequest()">Sauver</a>
+            <a class="btn right fond-color-1" onclick="modalClose('save_request')">Annuler</a>
+        </div>
+    </div>
+
+    <div class="card darken-1 modal" id="load_requests">
+        <div class="card-content">
+            <center><span class="card-title" >Sauver la requête</span></center>
+        </div>
+        <div class="card-action row">
+            <ul class="collection">
+                {{#requests_list}}
+                    <li class="collection-item">
+                        <div onclick="loadRequest('{{.}}')">{{.}}
+                        </div>
+                        <a  class="secondary-content">
+                             <i class="material-icons color-1" onclick="removeRequest('{{.}}')">remove</i>
+                        </a>
+                    </li>
+                {{/requests_list}}
+            </ul>
+        </div>
+    </div>
+
 
     <main>
         <div class="container row">
             <div class="row col  s12 offset-m4 m4">
                 <center><h1>Recherche</h1></center>
 
-                <form id="root-widget" action="/results" method="post">
+                <form id="root-widget" action="/results" method="post" class="row">
+                    <div id="criteres-content" class="row">
+                    </div>
+                    <div class="row" id="critere-slect-div">
+                        <a class='dropdown-trigger btn fond-color-3 col s4'  data-target='dropdown-criteres'>Ajouter un critère</a>
+                        <a class='btn fond-color-2 col s4' onclick="modal('load_requests')">Charger une requete</a>
+                        <a class='btn fond-color-2 col s4' onclick="showSaveRequestDialog()">Sauver une requete</a>
+                        <ul id='dropdown-criteres' class='dropdown-content'>
+                        </ul>
+                    </div>
 
-                    <#row(input_text("widget-it-match", "Texte à recrecher", "text", "Filtrer le titre", 0, "match"))>
 
-                    <#row(
-                        list(col(multiple_select("widget-sm-genre",
-                            "Filtrer par genre", objl(
+                    <center>
+                        <a onclick="send_request()" class="btn fond-color-1 color-4">Envoyer</a>
+                        <!--<input type="submit" class="btn fond-color-2 color-4" />-->
+                    </center>
+                </form>
+
+                <div class="hidden" id="criteres-list">
+                    <div class="row s12" data-label="Titre" data-field="name">
+                        <#input_text("widget-it-match", "Texte à recrecher", "text", "Filtrer le titre", 0, "match")>
+                    </div>
+
+                    <div class="row s12" data-label="Genre" data-field="genre">
+                        <#col(multiple_select("widget-sm-genre","Filtrer par genre", objl(
                             "thriller" , "thriller",  "science fiction" , "science fiction",     "policier" , "policier",    "fantastique" , "fantastique",    "guerre" , "guerre",    "epouvante-horreur" , "epouvante-horreur",     "comédie" , "comédie", "espionnage" , "espionnage",   "divers" , "divers",     "drame" , "drame",     "documentaire" , "documentaire",     "romance" , "romance",     "comédie dramatique" , "comédie dramatique",     "animation" , "animation",     "action" , "action",     "famille" , "famille",     "erotique" , "erotique",     "historique" , "historique",     "western" , "western",     "aventure" , "aventure",       "musical" , "musical",     "bollywood" , "bollywood",    "arts martiaux" , "arts martiaux",     "comédie musicale" , "comédie musicale",     "expérimental" , "expérimental",     "biopic" , "biopic",     "sport event" ,  "sport event",     "péplum" , "péplum",     "judiciaire" , "judiciaire",     "show" , "show",     "opera" , "opera",     "concert" , "concert",     "classique" , "classique"
-                        ), "genre"), "col s8"),
-                        col(select("widget-s-genre-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "genre-op"), "col s4")))>
+                        ), "genre"), "col s8")>
+                        <#col(select("widget-s-genre-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "genre-op"), "col s4")>
+                    </div>
 
-                    <#row(
-                        list(col(multiple_select("widget-sm-pays",
+
+                    <div class="row s12" data-label="Note" data-field="note">
+                        <#col(input_text("widget-itf-note-min", "", "number", "Note min", 0, "note-min"), "col s6")>
+                        <#col(input_text("widget-itf-note-max", "", "number", "Note max", 0, "note-max"), "col s6")>
+                    </div>
+
+                    <div class="row s12" data-label="Année" data-field="year">
+                        <#col(input_text("widget-itn-year-min", "", "number", "Année min", 0, "year-min"), "col s6")>
+                        <#col(input_text("widget-itn-year-max", "", "number", "Année max", 0, "year-max"), "col s6")>
+                    </div>
+
+                    <div class="row s12" data-label="Durée" data-field="duration">
+                        <#col(input_text("widget-itn-duration-min", "", "number", "Durée (minute) min", 0, "duration-min"), "col s6")>
+                        <#col(input_text("widget-itn-duration-max", "", "number", "Durée (minute) max", 0, "duration-max"), "col s6")>
+                    </div>
+
+
+                    <div class="row s12" data-label="Pays" data-field="nationality">
+                        <#col(multiple_select("widget-sm-pays",
                             "Filtrer par pays", objl(
                             "fr", "français", "us", "U.S.A.", "uk", "britannique", "it", "italien", "es", "espagnol", "be", "belge", "hk", "hong-kongais", "jp", "japonais", "ie", "irlandais", "de", "allemand", "ru", "russe", "af", "afghan", "al", "albanais", "dz", "algérien", "ad", "andorran", "ao", "angolais", "ag", "antiguais", "ar", "argentin", "am", "arménien", "au", "australien", "at", "autrichien", "az", "azerbaïdjanais", "bs", "bahaméen", "bh", "bahreini", "bb", "barbadien", "bz", "belizien", "bm", "Bermudien", "bt", "bhoutanais", "bo", "bolivien", "ba", "bosniaque", "bw", "botswanais", "br", "brésilien", "bg", "bulgare", "bf", "burkinabé", "bi", "burundais", "bj", "béninois", "kh", "cambodgien", "cm", "camerounais", "ca", "Québecois", "cf", "centrafricain", "cl", "chilien", "cn", "chinois", "cy", "chypriote", "co", "colombien", "cg", "congolais", "kr", "sud-coréen", "cr", "Costaricain", "hr", "croate", "cu", "cubain", "dk", "danois", "dj", "djiboutiens", "dm", "dominicain", "ee", "estonien", "fi", "finlandais", "ga", "gabonais", "gh", "ghanéen", "gr", "grec", "gt", "guatémaltèque", "gn", "guinéen", "ge", "géorgien", "ht", "haïtien", "hn", "hondurien", "hu", "hongrois", "in", "indien", "id", "indonésien", "iq", "Irakien", "ir", "iranien", "is", "islandais", "il", "israélien", "ci", "ivoirien", "jm", "jamaïcain", "jo", "jordanien", "kz", "kazakh", "ke", "Kenyan", "kg", "kirghiz", "kw", "kowetien", "la", "laotien", "lv", "letton", "lb", "libanais", "ly", "libyen", "lr", "libérien", "li", "liechtensteinois", "lt", "lituanien", "lu", "luxembourgeois", "mk", "macédonien", "my", "malaisien", "mw", "malawites", "mg", "malgache", "ml", "malien", "mt", "maltais", "ma", "marocain", "mu", "mauriciens", "mr", "mauritanien", "mx", "mexicain", "md", "moldave", "mc", "Monegasque", "mn", "mongol", "me", "monténégrin", "mz", "mozambiquais", "na", "namibien", "ni", "nicaraguéen", "ne", "nigérian", "ng", "nigérien", "kp", "nord-coréen", "no", "norvégien", "nl", "néerlandais", "nz", "néo-zélandais", "np", "népalais", "ug", "ougandais", "uz", "ouzbek", "pk", "pakistanais", "ps", "palestinien", "pa", "panaméen", "pg", "papouan-néo guinéen", "py", "paraguayen", "ph", "philippin", "pl", "polonais", "pr", "portoricain", "pt", "portugais", "pe", "péruvien", "qa", "qatarien", "ro", "roumain", "rw", "rwandais", "sa", "saoudien", "rs", "serbe", "sl", "sierra-léonais", "sg", "singapourien", "sk", "slovaque", "si", "slovène", "so", "somalien", "sd", "soudanais", "su", "soviétique", "lk", "sri-lankais", "za", "sud-africain", "ch", "suisse", "sr", "surinamien", "se", "suédois", "sz", "swazi", "sy", "syrien", "sn", "sénégalais", "tj", "tadjik", "tz", "tanzanien", "tw", "taïwanais", "td", "tchadien", "cz", "tchécoslovaque", "th", "thaïlandais", "tg", "togolais", "to", "tongien", "tt", "trinidadiens", "tn", "tunisien", "tr", "turc", "tm", "turkmène", "ua", "ukrainien", "uy", "uruguayen", "vn", "vietnamien", "ve", "vénézuélien", "yu", "yougoslave", "ye", "yéménite", "zm", "zambien", "eg", "égyptien", "ec", "équatorien", "et", "éthiopien"
-                        ), "pays"), "col s8"),
-                        col(select("widget-s-pays-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "pays-op"), "col s4")))>
+                        ), "pays"), "col s8")>
+                        <#col(select("widget-s-pays-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "pays-op"), "col s4"))>
+                    </div>
 
-                    <#row(list(
-                        col(input_text("widget-itf-note-min", "", "number", "Note min", 0, "note-min"), "col s6"),
-                        col(input_text("widget-itf-note-max", "", "number", "Note max", 0, "note-max"), "col s6")
-                    ))>
 
-                    <#row(list(
-                        col(input_text("widget-itn-duration-min", "", "number", "Durée (minute) min", 0, "duration-min"), "col s6"),
-                        col(input_text("widget-itn-duration-max", "", "number", "Durée (minute) max", 0, "duration-max"), "col s6")
-                    ))>
+                    <div class="row s12" data-label="Acteur" data-field="actor">
+                        <#row(input_text("widget-it-actor", "Filtrer par acteur", "text", "Filtrer par acteur", 0, "actor"))>
+                    </div>
 
-                    <#row(input_text("widget-it-actor", "Filtrer par acteur", "text", "Filtrer par acteur", 0, "actor"))>
+                    <div class="row s12" data-label="Réalisateur" data-field="director">
+                        <#row(input_text("widget-it-director", "Filtrer par liste", "text", "Filtrer par réalisateur", 0, "director"))>
+                    </div>
 
-                    <div class="row col s12">
-                        <div class="input-field col s8">
+                    <div class="row col s12" data-label="Listes utilisateur"  data-field="userlist">
+                        <div class="row input-field col s8">
                             <select multiple id="widget-it-userlist">
                                 {{#user_list_array}}
                                     <option value="{{.}}"><#get("user_list", "{{.}}", "name")></option>
@@ -62,33 +128,25 @@
                         </div>
                         <#col(select("widget-s-userlist-op", "Et / Ou", objl("or", "Ou", "and", "Et"), "userlist-op"), "col s4")>
                     </div>
-                    <#row(input_text("widget-it-director", "Filtrer par liste", "text", "Filtrer par réalisateur", 0, "director"))>
 
 
-                    <#row(input_text("widget-it-director", "Filtrer par réalisateur", "text", "Filtrer par réalisateur", 0, "director"))>
+                    <div class="row" data-label="Nombre de notes"  data-field="nnote">
+                        <#col(input_text("widget-itn-nnote-min", "", "number", "Nb de note min", 0, "nnote-min"), "col s6")>
+                        <#col(input_text("widget-itn-nnote-max", "", "number", "Nb de note max", 0, "nnote-max"), "col s6")>
+                    </div>
 
-                    <#row(list(
-                        col(input_text("widget-itn-year-min", "", "number", "Année min", 0, "year-min"), "col s6"),
-                        col(input_text("widget-itn-year-max", "", "number", "Année max", 0, "year-max"), "col s6")
-                    ))>
+                    <div class="row" data-label="Nombre de critiques" data-field="nreview">
+                        <#col(input_text("widget-itn-nreview-min", "", "number", "Nb de critiques min", 0, "nreview-min"), "col s6")>
+                        <#col(input_text("widget-itn-nreview-max", "", "number", "Nb de critiques max", 0, "nreview-max"), "col s6")>
+                    </div>
 
-                    <#row(list(
-                        col(input_text("widget-itn-nnote-min", "", "number", "# de note min", 0, "nnote-min"), "col s6"),
-                        col(input_text("widget-itn-nnote-max", "", "number", "# de note max", 0, "nnote-max"), "col s6")
-                    ))>
+                    <div class="row" data-label="À voir / vu"  data-field="seen">
+                        <#col(select("widget-sb-tosee", "Marqué à voir", objl("", "", "True", "Oui", "False", "Non"), "tosee"), "col s6")>
+                        <#col(select("widget-sb-seen", "Marqué déja vu", objl("", "", "True", "Oui", "False", "Non"), "seen"), "col s6")>
+                    </div>
 
-                    <#row(list(
-                        col(input_text("widget-itn-nreview-min", "", "number", "# de critiques min", 0, "nreview-min"), "col s6"),
-                        col(input_text("widget-itn-nreview-max", "", "number", "# de critiques max", 0, "nreview-max"), "col s6")
-                    ))>
-
-                    <#row(list(
-                            col(select("widget-sb-tosee", "Marqué à voir", objl("", "", "True", "Oui", "False", "Non"), "tosee"), "col s6"),
-                            col(select("widget-sb-seen", "Marqué déja vu", objl("", "", "True", "Oui", "False", "Non"), "seen"), "col s6")
-                    )))>
-
-                    <#row(list(
-                            col(select("widget-s-order", "Trié par", objl(
+                    <div class="row" data-label="Tris"  data-field="sort">
+                            <#col(select("widget-s-order", "Trié par", objl(
                                 "", "",
                                 "note", "Note",
                                 "year", "Année",
@@ -102,81 +160,62 @@
                                 "id", "ID",
                                 "shuffle", "Hasard"
                                 ), "order"
-                            ), "col s8"),
-                            col(select("widget-s-order-sort", "Marqué déja vu", objl("asc", "Croissant", "desc", "Décroissant"), "order-sort"), "col s4")
-                    )))>
-
-                    <#row(input_text("widget-itn-rand", "", "number", "Tirer des résultats au hazard", 0, "rand"))>
-
-                    <#row(select("widget-s-nperpage", "Résultats par page", objl(
-                        "10", "10",
-                        "20", "20",
-                        "50", "50",
-                        "100", "100",
-                        "-1", "Tous"))))>
-
-                    <div class="col offset-s4 s4 offset-m4 m4 row">
-                        <a onclick="send_request()" class="btn fond-color-2 color-4">Envoyer</a>
-                        <!--<input type="submit" class="btn fond-color-2 color-4" />-->
+                            ), "col s8")>
+                            <#col(select("widget-s-order-sort", "Marqué déja vu", objl("asc", "Croissant", "desc", "Décroissant"), "order-sort"), "col s4")>
                     </div>
-                </form>
+
+                    <div class="row s12" data-label="Resultats aléatoires" data-field="rand">
+                        <#input_text("widget-itn-rand", "", "number", "Tirer des résultats au hazard", 0, "rand")>
+                    </div>
+
+                    <div class="row s12" data-label="Nombre par pages"  data-field="nperpage">
+                        <#select("widget-s-nperpage", "Résultats par page", objl(
+                            "25", "Défaut",
+                            "10", "10",
+                            "20", "20",
+                            "50", "50",
+                            "100", "100",
+                            "-1", "Tous"))>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
-    <script>
-        $(document).ready(function(){
-            $("#widget-it-match").autocomplete()
-            $("#widget-it-match").keypress(function(evt) { if(evt.which==13) send_request() })
-            $("#widget-it-match").keyup(function() { on_autocomplete_up($("#widget-it-match"), "name") })
-
-            $("#widget-it-actor").autocomplete()
-            $("#widget-it-actor").keypress(function(evt) { if(evt.which==13) send_request() })
-            $("#widget-it-actor").keyup(function() { on_autocomplete_up($("#widget-it-actor"), "actor") })
-
-
-            $("#widget-it-director").autocomplete()
-            $("#widget-it-director").keypress(function(evt) { if(evt.which==13) send_request() })
-            $("#widget-it-director").keyup(function() { on_autocomplete_up($("#widget-it-director"), "director") })
-        })
-        var postjson={}
-
-        function it_val(x){ return (x.length==0)?null:x  }
-        function itn_val(x){ return (x.length==0)?null:parseInt(x)  }
-        function itf_val(x){ return (x.length==0)?null:parseFloat(x)  }
-
-        function s_val(x){ return (x.length==0)?null:x  }
-        function sm_val(x){ return (x.length==0)?null:x  }
-        function sb_val(x){ return (x.length==0)?null:(x=="True")  }
-
-
-        function add_widget_val(x){
-            var id=x.attr("id").substring(7)
-            var type=id.substr(0,id.search("-"))
-            var name=id.substr(id.search("-")+1)
-            var val=null
-            var tmp=null
-            switch(type){
-                case "it": val=it_val(x.val()); break;
-                case "itn": val=itn_val(x.val()); break;
-                case "itf": val=itf_val(x.val()); break;
-                case "s": val=s_val(x.val()); break;
-                case "sm": val=sm_val(x.val()); break;
-                case "sb": val=sb_val(x.val()); break;
-                default: alert(type+" inconnu")
-            }
-            postjson[name]=val
+    <style>
+        .row {
+            padding-left: 5px ! important;
+            margin-bottom: 3px;
         }
 
-        function send_request(){
-            $("#root-widget").find('[id^=widget-]').each(function(a,b){ add_widget_val($(b)) } )
-            $('body').append($('<form/>')
-              .attr({'action': "results", 'method': 'post', 'id': 'replacer'})
-              .append($('<input/>')
-                .attr({'type': 'hidden', 'name': 'json', 'value': JSON.stringify(postjson)})
-              )
-            ).find('#replacer').submit();
+        .hidden {
+            display: none;
         }
-    </script>
+
+        .a > .span {
+
+        }
+
+        #criteres-content > div > a {
+            position: relative;
+            padding-right: 5px;
+            padding-left: 5px ! important;
+            top: 25px;
+            left: -40px;
+        }
+
+        .secondary-content {
+            position: relative;
+            top: -20px;
+
+        }
+
+        #critere-slect-div {
+            position: relative;
+            left: -50px;
+            width: calc(100% + 75px) ! important;
+        }
+    </style>
+
     <#include("www/gen/footer.html")>
 </body>
 

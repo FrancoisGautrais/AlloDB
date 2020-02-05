@@ -27,9 +27,9 @@ def mat_switch(id, labelOn, labelOff="", name=""):
 
     return  htmldiv(htmllabel([ labelOn, input, labelOff]), classes="switch")
 
-def mat_row(content, classes="col s12"):
+def mat_row(content, classes="col s12", id=None):
     if isinstance(content, (list, tuple)): content="\n".join(content)
-    x=htmldiv(content, classes="row ")
+    x=htmldiv(content, classes="row ", id=id)
     return  x.add_class(classes)
 
 def mat_col(content, classes="s12"):

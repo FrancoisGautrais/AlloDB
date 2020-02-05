@@ -19,6 +19,7 @@ class User:
         self.db={}
         self.change=False
         self.lists={}
+        self.requests={}
         if name:
             self.name=name
         elif js:
@@ -33,6 +34,9 @@ class User:
                 for x in js["lists"]:
                     self.lists[x]=AlloList(js=js["lists"][x])
             else: js["lists"]=[]
+
+            if "requests" in js:
+                self.requests=js["requests"]
             #self.remove_to_list(None, "7ac51d11")
             for x in self.db:
                 if (not "lists" in self.db[x] or self.db[x]["lists"]==None):
@@ -56,6 +60,7 @@ class User:
         js={}
         js["name"]=self.name
         js["db"]=self.db
+        js["requests"]=self.requests
         x={}
         for l in self.lists:
             x[l]=self.lists[l].json()
@@ -115,6 +120,12 @@ class User:
         self.db[filmid]["lists"].append(listid)
         self.lists[listid].list.append(filmid)
         return True
+
+    def add_request(self, name, req):
+        self.requests[name]=req
+
+    def delete_request(self, name):
+        del self.requests[name]
 
     def remove_to_list(self, filmid, listid):
         """if not filmid:
