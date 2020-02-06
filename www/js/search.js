@@ -6,6 +6,29 @@ function option(label, value) {
     return $('<li> <a onclick="onSelectCritereChange(\''+value+'\')">'+label+'</a></li>')
 }
 
+function loadRequest(a)
+{
+    a=REQUEST_LIST[a]
+    var fields = a.fields;
+    var values =  a.values;
+    clearCriteres();
+    for( var key in fields){
+        var field = fields[key]
+        onSelectCritereChange(field)
+    }
+    for (var keys in values) {
+        var elem = $("[id^=widget-][id$='"+keys+"']")
+        var val = values[keys]
+        var id = elem.attr("id")
+        if (id && id.startsWith("widget-sb")) {
+            if(val) val="true"
+            else if(val==false) val="false"
+        }
+        elem.val(val)
+    }
+    $("select").formSelect()
+}
+
 function updateSelecteAdd()
 {
     var list = []
@@ -36,12 +59,16 @@ function getResults()
 {
     var values = {}
     $("#criteres-content").find("[id^=widget-").each(function(i ,elem){
-        values=Object.assign(values, get_widget_val($(elem)))
+        elem = $(elem)
+        var elemDict=get_widget_val(elem)
+        values=Object.assign(values, elemDict)
+
     })
     var fields = []
     $("#criteres-content").find("div[data-field]").each(function(i ,elem){
         fields.push($(elem).data("field"))
     })
+
     var out = {
         values: values,
         fields : fields
@@ -86,6 +113,7 @@ $(document).ready(function(){
     $("#widget-it-director").keypress(function(evt) { if(evt.which==13) send_request() })
     $("#widget-it-director").keyup(function() { on_autocomplete_up($("#widget-it-director"), "director") })
 
+    _run()
 })
 
 var postjson={}
@@ -96,7 +124,7 @@ function itf_val(x){ return (x.length==0)?null:parseFloat(x)  }
 
 function s_val(x){ return (x.length==0)?null:x  }
 function sm_val(x){ return (x.length==0)?null:x  }
-function sb_val(x){ return (x.length==0)?null:(x=="True")  }
+function sb_val(x){ return (x.length==0)?null:(x=="true")  }
 
 function showSaveRequestDialog(){
     $("#it-request").val("")
@@ -123,7 +151,27 @@ function confirmSaveRequest()
             error("Impossible de sauver la requete")
         }
     });
+}
 
+function removeRequest(val)
+{
+    confirm("Supprimer",
+            "Supprimer la requete '"+val+"' ?",
+        function () {
+            $.ajax({
+                type: 'DELETE',
+                url: '/request/'+val,
+                success: function (data) {
+                    M.toast({ html: "Élément supprimé"})
+                },
+                error: function () {
+                    error("Impossible de supprimer la requete")
+                }
+            })
+        },function(){
+            modalClose("loading")
+        }
+    )
 }
 
 function get_widget_val(x){
@@ -159,3 +207,4 @@ function send_request(){
       )
     ).find('#replacer').submit();
 }
+

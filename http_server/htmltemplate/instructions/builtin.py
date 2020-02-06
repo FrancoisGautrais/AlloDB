@@ -125,3 +125,4 @@ def inst_urldecode(args, data): return parse.unquote(args[0])
 
 def inst_escapequote(args, data):
     return args[0].replace("\"", "\\\"")
+

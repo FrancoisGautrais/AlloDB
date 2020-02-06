@@ -35,6 +35,22 @@
     top: -5px ! important;
 }
 
+.navbar-item-run {
+}
+
+.navbar-item-run > i {
+    display: float;
+    position: relative;
+    top: -20px;
+    font-size: 20px;
+    margin-right: 5px;
+}
+
+.navbar-item-run > a{
+    display: float;
+    margin-right: 40px;
+}
+
 .navbar-item-little {
     height: 30px ! important;
     padding-left: 16px;
@@ -103,10 +119,13 @@
     <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a></li>
     {{/user_list_array}}
     <li><div class="divider"></div></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4">Sélections</a></li>
-    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/toseeagain">À revoir</a></li>
-    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/tosee">À voir</a></li>
-    <li class="navbar-item-little"><a class="waves-effect nav-text-little color-4" href="/short/seen">Vus</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4">Requêtes</a></li>
+    {{#requests_list}}
+        <li class="navbar-item-run">
+            <a class="waves-effect nav-text-little color-4" href="/request/{{.}}">{{.}}</a>
+            <i class="material-icons right color-4" onclick="url('/request/{{.}}/run')">send</i>
+        </li>
+    {{/requests_list}}
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/import">Importer</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/export">Exporter</a></li>
@@ -203,7 +222,6 @@ function on_head_search(){
 
 function on_autocomplete_up(elem, type){
     var val = elem.val()
-
     if(val.length>=1){
         $.ajax({
                 type: "GET",
@@ -221,5 +239,4 @@ function on_autocomplete_up(elem, type){
         })
     }
 }
-
 </script>

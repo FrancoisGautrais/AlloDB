@@ -146,9 +146,10 @@ class AlloServer(RESTServer):
 
         self.route("GET", "/short/#id", self.handle_short)
 
+        self.route("GET", "/request/#name", self.handle_get_request)
+        self.route("GET", "/request/#name/run", self.handle_run_request)
         self.route("POST", "/request/#name", self.handle_create_request)
         self.route("DELETE", "/request/#name", self.handle_delete_request)
-
 
         self.route("GET", "/autocomplete/#type/#match", self.handle_autocomplete)
         self.route("GET", "/autocomplete/#type/#match/#max", self.handle_autocomplete)
@@ -385,6 +386,24 @@ class AlloServer(RESTServer):
 
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object()))
+
+    def handle_get_request(self, req: HTTPRequest, res: HTTPResponse):
+        res.serve_file_gen(config.www("index.html"), self.userlist_object({
+            "run" : req.params["name"]
+        }))
+
+    def handle_run_request(self, req: HTTPRequest, res: HTTPResponse):
+        path = config.www("results.html")
+        name = req.params["name"]
+        args = self.db.userdata.requests[name]["values"]
+        request = json_to_request(args)
+        tmp = Request(self.db.execute(request))
+        x = tmp.result
+        x.pagesize = args["nperpage"] if "nperpage" in args else 20
+        self.requests[x.id] = tmp
+        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+
+
 
     def handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
         self.db.userdata.add_request(req.params["name"], req.body_json())

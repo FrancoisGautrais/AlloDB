@@ -128,23 +128,9 @@ class User:
         del self.requests[name]
 
     def remove_to_list(self, filmid, listid):
-        """if not filmid:
-            for x in self.db:
-                self.remove_to_list(x, listid)
-            return
-
-        if listid in self.lists:
-            self.lists[listid].list.remove(filmid)
-        if "lists" in self.db[filmid] and listid in self.db[filmid]["lists"]:
-            self.db[filmid]["lists"].remove(listid)"""
         self.lists[listid].list.remove(filmid)
         self.db[filmid]["lists"].remove(listid)
-
         return True
-
-
-
-
 
     def save(self):
         userpath=config.user(self.name)
