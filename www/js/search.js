@@ -16,6 +16,7 @@ function loadRequest(a)
         var field = fields[key]
         onSelectCritereChange(field)
     }
+
     for (var keys in values) {
         var elem = $("[id^=widget-][id$='"+keys+"']")
         var val = values[keys]

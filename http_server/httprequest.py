@@ -148,6 +148,12 @@ class HTTPRequest(_HTTP):
     def get_socket(self):
         return self._socket
 
+    def is_mobile(self):
+        info = self.header("User-Agent")
+        if info:
+            return "mobi" in info.lower()
+        return False
+
     def header(self, key : str):
         if key in self._headers:
             return self._headers[key]
@@ -162,7 +168,6 @@ class HTTPRequest(_HTTP):
             self._parse_body()
 
     def multipart_next_file(self):
-
         ct = self.header("Content-Type")
         objct={}
         for x in ct.split(";"):
@@ -186,7 +191,8 @@ class HTTPRequest(_HTTP):
             self._set_header(key, val)
             line=self._socket.readline()[:-1]
 
-
+    def __deepcopy__(self, memodict={}):
+        return self
 
     def _parse_body(self):
         l=self.content_length()
@@ -236,7 +242,6 @@ class HTTPRequest(_HTTP):
         self.url=head[1]
         self.version=head[2]
 
-
         self.path=unquote(self.url)
         n=self.url.find("?")
 
@@ -249,11 +254,11 @@ class HTTPRequest(_HTTP):
 
 
 class HTTPResponse(_HTTP):
-
-    def __init__(self, code=200):
+    def __init__(self, req, code=200):
         _HTTP.__init__(self)
         self.version = "HTTP/1.1"
         self.code=code
+        self.request= req
         self.msg=STR_HTTP_ERROR[code]
 
 
@@ -282,6 +287,8 @@ class HTTPResponse(_HTTP):
         m=filecache.mime(path)
         self.content_type(m)
         self.header("Content-Length", str(os.stat(path).st_size))
+        data["_request"] = self.request
+        data["_response"] = self
         if m!="application/octet-stream":
             self.end(html_gen(path, data))
         else:
@@ -335,6 +342,7 @@ class HTTPResponse(_HTTP):
         self.msg = STR_HTTP_ERROR[HTTP_TEMPORARY_REDIRECT]
         self.header("Location", url)
         self.end("")
+
 
     def write(self, soc : SocketWrapper):
         out=None

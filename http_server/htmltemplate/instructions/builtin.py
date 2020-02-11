@@ -3,8 +3,21 @@ from ...filecache import filecache
 from ..htmlgen import html_gen_fd
 import  copy
 import json
+
+def custom_deepcopy(x):
+    cp = {}
+    for key in x:
+        if key.startswith("_"):
+            cp[key]=x[key]
+        else:
+            cp[key]=copy.deepcopy(x[key])
+    return cp
+
+
+
+
 def inst_include(args, data):
-    x=copy.deepcopy(data)
+    x=custom_deepcopy(data)
     with filecache.open(args[0]) as f:
         if len(args)>1:
             x.update(args[1])
@@ -20,6 +33,18 @@ def inst_get(args, data):
 #
 def inst_set(args, data):
     inst_get(args[:-2], data)[args[-2]]=args[-1]
+
+
+def inst_ismobile(args, data):
+    return data["_request"].is_mobile()
+
+def inst_ifmobile(args, data):
+    if data["_request"].is_mobile():
+        return args[0]
+
+def inst_ifnmobile(args, data):
+    if not data["_request"].is_mobile():
+        return args[0]
 
 def inst_cat(args, data):
     acc=""
@@ -92,7 +117,15 @@ def inst_desktop(args, data):
         return args[1]
 
 def inst_json(args, data):
-    return json.dumps(args[0])
+    x=args[0]
+    if isinstance(x, dict):
+        out={}
+        for k in x:
+            if x[k]==None or isinstance(k, (int, float, bool, tuple, list, dict)):
+                out[k]=x[k]
+    else:
+        out=x
+    return json.dumps(out)
 
 def inst_replace(args, data):
     return args[0].replace(args[1], args[2])

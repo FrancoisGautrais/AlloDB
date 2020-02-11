@@ -1,3 +1,4 @@
+import uuid
 
 import pystache
 from threading import Lock
@@ -104,6 +105,9 @@ _MIME_TO_TYPES={
     "*" : "document"
 }
 MIME_TO_TYPES={}
+
+def new_id():
+    return str(uuid.uuid4())[:8]
 
 def _init_mime():
     global _MIME_TO_TYPES

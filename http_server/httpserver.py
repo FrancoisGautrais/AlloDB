@@ -47,7 +47,7 @@ class HTTPServer(ServerSocket):
         while req:
             req.start_time=t
             req.parse()
-            res = HTTPResponse(200, )
+            res = HTTPResponse(req, 200, )
 
             self.handlerequest(req, res)
             res.write(req.get_socket())
@@ -70,7 +70,7 @@ class HTTPServer(ServerSocket):
                 log.critical("========== Error unable to read HTTP first line ==========")
 
         req.parse()
-        res=HTTPResponse(200, )
+        res=HTTPResponse(req, 200, )
         self.handlerequest(req, res)
 
         res.write(req.get_socket())

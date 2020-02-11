@@ -1,8 +1,6 @@
 import uuid
 from urllib import parse
-
-def new_id():
-    return str(uuid.uuid4())[:8]
+from http_server.utils import new_id
 
 def dictassign(dest, *sources):
     for d in sources:
