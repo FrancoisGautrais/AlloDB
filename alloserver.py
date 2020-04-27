@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import sys
 
 import filmfinder
 from allolist import AlloList
@@ -10,6 +11,7 @@ import config
 from allodb import DB
 import user
 from http_server.httpserver import HTTPServer
+from http_server.log import Log
 from http_server.restserver import RESTServer, HTTPRequest, HTTPResponse
 from http_server import log, utils
 from http_server.filecache import  filecache
@@ -419,5 +421,33 @@ if os.path.exists(config.user("fanch")):
 else:
     usr= user.User.createuser("fanch")
 
+browser=None
+port=8080
+logfile=sys.stdout
+if len(sys.argv)>2:
+    i=1
+    while i< len(sys.argv):
+        arg=sys.argv[i]
+        if arg=="-b" or arg=="--browser":
+            browser=sys.argv[i+1]
+            i+=1
+        if arg=="-p" or arg=="--port":
+            port=int(sys.argv[i+1])
+            i+=1
+        if arg=="-l" or arg=="--log":
+            logfile=open(sys.argv[i+1], "w")
+            i+=1
+        i+=1
+
+
+Log.init()
+
+
 als = AlloServer(usr)
-als.listen(8080)
+if not browser:
+    als.listen(port)
+else:
+    if os.fork():
+        als.listen(port)
+    else:
+        os.system("%s 'http://localhost:%d' " % (browser,port))

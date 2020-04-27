@@ -89,23 +89,24 @@ class FilmFinder:
 
 class ZoneTelechargementFinder(FilmFinder):
     HEAD = {
-        "Host": "www.zone-telechargement2.vip",
+        "Host": "www.zone-warez.com",
         "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:71.0) Gecko/20100101 Firefox/71.0",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
         "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3",
         "Content-Type": "application/x-www-form-urlencoded",
-        "Origin": "https://www.zone-telechargement2.vip",
+        "Origin": "https://www.zone-warez.com/",
         "DNT": "1",
         "Connection": "keep-alive",
-        "Referer": "https://www.zone-telechargement2.vip/",
+        "Referer": "https://www.zone-warez.com/",
     }
     def do_find(self):
-        req = requests.post("http://www.zone-telechargement2.vip/index.php?do=search", "do=search&subaction=search&search_start=0&full_search=1&result_from=1&story="+utils.urlencode(self.title)+"&titleonly=0&searchuser=&replyless=0&replylimit=0&searchdate=0&beforeafter=after&sortby=date&resorder=desc&showposts=1&catlist%5B%5D=2&user_hash=636b4560bb73a51b506836d8293f5770506a68d0", headers=ZoneTelechargementFinder.HEAD)
+        req = requests.post("https://www.zone-warez.com/index.php?do=search", "do=search&subaction=search&search_start=0&full_search=1&result_from=1&story="+utils.urlencode(self.title)+"&titleonly=0&searchuser=&replyless=0&replylimit=0&searchdate=0&beforeafter=after&sortby=date&resorder=desc&showposts=1&catlist%5B%5D=2&user_hash=636b4560bb73a51b506836d8293f5770506a68d0", headers=ZoneTelechargementFinder.HEAD)
+        print(req.content)
         dom = etree.HTML(req.content)
         out=[]
         for elem in (dom.xpath('//div[@class="mov"]')):
             try:
-                f=Film("www.zone-telechargement2.vip")
+                f=Film("https://www.zone-warez.com/")
                 f.year=int(elem.findall('.//div[@class="mov-m"]/a')[0].text)
                 f.langue=elem.findall('.//span[@class="langue"]/b')[0].text.strip()
                 f.title=elem.findall('a[@class="mov-t nowrap"]')[0].get("title")

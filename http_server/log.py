@@ -34,6 +34,7 @@ class Log:
        lines=line.split("\n")
        for l in lines:
            self._log(level, l)
+       self.fd.flush()
 
     def debug(self, *args): return self.log(Log.DEBUG, *args)
     def d(self, *args): return self.log(Log.DEBUG, *args)

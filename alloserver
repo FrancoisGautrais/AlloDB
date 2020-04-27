@@ -1,0 +1,3 @@
+#!/bin/bash
+cd /home/fanch/Programmation/AlloDB
+python3 alloserver.py -b firefox
