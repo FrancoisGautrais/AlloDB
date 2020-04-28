@@ -187,12 +187,13 @@
 
 
 <script>
-data=<#json(get())>
+data=<#get("requests_list")>
 function autocomp_to_obj(arr){
     var out={}
     for( var i in arr) out[arr[i]]=null
     return out
 }
+
 
 function autocomp_to_obj_name(arr){
     var out={}

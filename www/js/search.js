@@ -8,6 +8,7 @@ function option(label, value) {
 
 function loadRequest(a)
 {
+
     a=REQUEST_LIST[a]
     var fields = a.fields;
     var values =  a.values;
