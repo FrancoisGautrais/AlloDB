@@ -141,7 +141,9 @@ class AlloServer(RESTServer):
         self.route("GET", "/film/#id", self.handle_film)
         self.route("POST", "/film/#id", self.handle_film_modify)
         self.route("GET", "/results/#id/#page", self.handle_results)
+        self.route("GET", "/results/#id/export/#format/#filename", self.handle_results_export)
         self.route("POST", "/results", self.handle_results)
+
 
         self.route("GET", "/showlist/#id", self.handle_show_list)
         self.route("GET", "/showlist/#id/#page", self.handle_show_list)
@@ -361,6 +363,24 @@ class AlloServer(RESTServer):
         match = req.params["match"]
         max = int(req.params["max"]) if "max" in req.params else -1
         res.serveJson(self.db.autocomplete(match,type, max))
+
+
+    def handle_results_export(self, req : HTTPRequest, res : HTTPResponse):
+        if "id" in req.params and req.params["id"] in self.requests:
+            x = self.requests[req.params["id"]].result
+            data=""
+            format=req.params["format"]
+            filename=req.params["filename"]
+            if format == "csv" :
+                data=str(x)
+                res.header("Content-Type", "text/csv")
+            elif format == "json" :
+                data=x.moustache()
+                res.header("Content-Type", "application/json")
+            res.header("Content-Disposition", "attachment; filename=\"%s\"" % filename)
+            res.end(data)
+        else:
+            return res.serve400()
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")

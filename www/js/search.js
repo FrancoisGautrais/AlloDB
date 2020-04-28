@@ -29,6 +29,7 @@ function loadRequest(a)
         elem.val(val)
     }
     $("select").formSelect()
+    modalClose("load_requests")
 }
 
 function updateSelecteAdd()
@@ -44,7 +45,6 @@ function updateSelecteAdd()
 function onRemoveCritere(x)
 {
     var input = x.parent().find("div[data-label]")
-    console.log(input)
     critereListDiv.append(input)
     x.parent().remove()
     updateSelecteAdd()

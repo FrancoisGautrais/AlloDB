@@ -85,8 +85,8 @@ class ResultSet:
         return self.__str__()
 
     def __str__(self):
-        head=self.db.header.allheader()
-        out=str(len(self.data))+" résultats en "+str( int(self.time*1000000)/1000)+" ms\n"
+        head=self.db.header.allheader
+        out=str(len(self.data))+" résultats; en "+str( int(self.process_time*1000000)/1000)+" ms\n"
         out+=str(self.db.header.format(head))+"\n"
         for x in self.data:
             out+=x.format(head)+"\n"

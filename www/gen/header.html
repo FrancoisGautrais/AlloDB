@@ -1,3 +1,7 @@
+<script>
+var MAIN_DATA=<#json(get())>
+</script>
+
 <style>
 .title {
     font-size: 24px;
@@ -187,7 +191,7 @@
 
 
 <script>
-data=<#get("requests_list")>
+data=<#json(get())>
 function autocomp_to_obj(arr){
     var out={}
     for( var i in arr) out[arr[i]]=null
@@ -228,8 +232,6 @@ function on_autocomplete_up(elem, type){
                 type: "GET",
                 url: "/autocomplete/"+type+"/"+val+"/9",
                 success: function(data){
-
-                console.log(data)
                     var instance = M.Autocomplete.getInstance(elem)
                     elem[0].autocompletedata=data
                     instance.updateData(

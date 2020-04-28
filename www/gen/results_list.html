@@ -120,6 +120,7 @@
     </li>
 </ul>
 
+<script>var CURRENT_REQUEST_ID='<#get("id")>'</script>
 {{/data}}
 
 <#include("www/gen/find_download.html")>
@@ -163,7 +164,6 @@ function main_callback(i, obj){
     if(objid.startsWith("cb_")) obj.prop("checked", data.value.toLowerCase()=="true")
     else{
         obj.val(data.value)
-        console.log(objid,"->", data.value)
     }
     obj.change(function(evt){
         var obj=$(evt.target)

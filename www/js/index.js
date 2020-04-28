@@ -23,7 +23,6 @@ function _cmp(a,b)
     if(_sort_field!="name"){
         a=parseFloat(a)
         b=parseFloat(b)
-        console.log(a+" "+b)
         return (_sort_order=="dec")?(a<b):(a>b)
     }
     return (_sort_order=="dec")?(a.toLowerCase()<b.toLowerCase()):(a.toLowerCase()>b.toLowerCase())
@@ -61,7 +60,6 @@ function confirm_modify(){
         "attrs" : x
     }
     modal("loading")
-    console.log(data)
     $.ajax({
             type: 'POST',
             processData: false, // important
@@ -250,7 +248,6 @@ function file_info()
                 url: "/file/"+currentFile.path,
 
                 success: function(jsonData){
-                    console.log(tbody, jsonData)
                     modalClose("loading")
                     _file_info(tbody,jsonData,isdir)
                     modal("file_info")

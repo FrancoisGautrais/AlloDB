@@ -56,7 +56,6 @@ var _currentFilmId=null
 function filter_list()
 {
     var list=$("#it-list-filter").val().toLowerCase()
-    console.log("->'"+list+"'")
     $("#list_root").find("tr").each(function (i, x){
         x=$(x)
         var v = x.attr("data-value")

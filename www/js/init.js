@@ -62,7 +62,6 @@ function error(title, text)
 
 function autoreplaceall()
 {
-    console.log($(".autoreplace"))
     $(".autoreplace").each(function(index, el){
         el=$(el)
         name="autoreplace_"+el.attr("data-type")
@@ -133,3 +132,4 @@ function clearTextSelection()
         }
     }
 }
+
