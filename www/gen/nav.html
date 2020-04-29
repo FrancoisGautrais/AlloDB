@@ -54,7 +54,7 @@ function on_send_sort()
     if(type){
         var query = "type="+type
         if(order!="") query+="&order="+order
-        url='/results/<#get("id")>/<#add(get("page"),1)>?'+query
+        url='/results/<#get("id")>/<#add(get("page"),1)>?'+query //--------------------------------------------------------------------------------
         if(npp!="") url+="&pagesize="+npp
         window.location.href=url
     }else if (npp!=""){

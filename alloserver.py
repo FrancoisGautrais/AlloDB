@@ -3,6 +3,8 @@ import os
 import time
 import sys
 
+import requests
+
 import filmfinder
 from allolist import AlloList
 import uuid
@@ -171,7 +173,19 @@ class AlloServer(RESTServer):
         self.route("GET", "/list/#idl/remove/#idfilm", self.handle_list_remove_item)
 
 
+        self.route("GET", "/stop", self.handle_stop)
+        self.route("GET", "/nop", self.handle_nop)
+
+
         self.static("/", config.WWW_DIR)
+
+    def handle_nop(self, req: HTTPRequest, res: HTTPResponse):
+        self.stop()
+        pass
+
+    def handle_stop(self, req: HTTPRequest, res: HTTPResponse):
+        self.stop()
+        requests.get("http://localhost:%d/nop" % self._port)
 
     def handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
         id=req.params["id"]
@@ -460,6 +474,7 @@ if len(sys.argv)>2:
         i+=1
 
 
+
 Log.init()
 
 
@@ -469,5 +484,6 @@ if not browser:
 else:
     if os.fork():
         als.listen(port)
+        als.db.userdata.save()
     else:
         os.system("%s 'http://localhost:%d' " % (browser,port))
