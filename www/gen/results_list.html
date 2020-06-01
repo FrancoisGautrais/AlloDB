@@ -155,13 +155,14 @@ function find_callback(id){
     if(id.startsWith("cb_to")) return to_see_changed
     return ownnote_change
 }
-
+var __data=null;
 function main_callback(i, obj){
     obj=$(obj)
     var objid=obj.attr("id")
 
     data=obj.data()
-    if(objid.startsWith("cb_")) obj.prop("checked", data.value.toLowerCase()=="true")
+    __data=data
+    if(objid.startsWith("cb_")) obj.prop("checked",  data.value==1)
     else{
         obj.val(data.value)
     }

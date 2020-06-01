@@ -1,6 +1,8 @@
 import uuid
 from urllib import parse
 from http_server.utils import new_id
+from hashlib import sha3_512
+import base64
 
 def dictassign(dest, *sources):
     for d in sources:
@@ -17,3 +19,11 @@ def urlencode(x):
 
 def urldecode(x):
     return parse.quote_plus(x)
+
+
+def password(pwd):
+    x=sha3_512(pwd.encode()).digest()
+    return base64.b64encode(x).decode("ascii")
+
+def check_password(plain, encr):
+    return password(plain)==encr

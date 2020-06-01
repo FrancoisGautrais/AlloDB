@@ -1,7 +1,48 @@
+import os
 import time
 import json
 import sqlite3
 import resultset
+from hashlib import sha3_512
+import base64
+import utils
+
+def join(x):
+    if isinstance(x, str): return x
+    if isinstance(x, (tuple, list)): return ";".join(x)
+    return ""
+
+
+
+def _int(x):
+    if isinstance(x, (int, float, str)): return int(x)
+    return -1
+
+
+FCTS = [
+    _int,
+    str,
+    str,
+    join,
+    _int,
+    _int,
+    join,
+    str,
+    join,
+    join,
+    join,
+    join,
+    float,
+    _int,
+    _int
+]
+
+
+def format_row(row):
+    out = []
+    for i in range(len(row)):
+        out.append(FCTS[i](row[i]))
+    return tuple(out)
 
 def translate_query(src):
     i=0
@@ -40,7 +81,6 @@ class SQConnector:
         return c.execute(sql).fetchone()
 
     def one(self, sql):
-        print(sql)
         c = self.conn.cursor()
         return c.execute(sql).fetchone()[0]
 
@@ -57,10 +97,45 @@ class SQConnector:
             query+=" ORDER BY %s" % order
         cur=self.conn.cursor()
         rs=resultset.ResultSet(pagesize, page)
-        print(query)
         cur.execute(query)
         rs.set_results(cur)
         return rs
+
+    def init_base(self, file):
+        with open(file, "r") as f:
+            js=json.loads(f.read())
+        self.exec("""create table films (
+	id int primary key,
+    name text,
+    image text,
+    nationality text,
+    year int,
+    duration int,
+    genre text,
+    description text,
+    director text,
+    actor text,
+    creator text,
+    musicBy text,
+    note real,
+    nnote int,
+    nreview int)
+""")
+        for row in js["data"]:
+            row = format_row(row)
+            try:
+                self.exec("insert into films (id,name,image,nationality,year,duration,genre,description,director,actor,creator,musicBy,note,nnote,nreview) values %s;" % str(row))
+            except Exception as err:
+                print("Error '%s' : %s" % (row[1], str(err)))
+        self.exec("""create table users (
+            name text,
+            password text,
+            apikey text,
+            data text
+            ) """)
+        self.conn.commit()
+
+
 
     def init_user(self, username, file):
         with open(file) as f:
@@ -75,6 +150,7 @@ class SQConnector:
 
         usr=self.exec("select name from sqlite_master where type='table' AND name='%s'" % username)
         if not len(usr):
+            self.exec("insert into users (name, password) values ('%s', '%s') " % (username, utils.password("")))
             query="""create table %s(
                 filmid int,
                 ownnote INT,
@@ -103,9 +179,8 @@ class SQConnector:
                              "'%s'" % (obj["comment"] if obj["comment"] else ''),
                              "'%s'" % ",".join(obj["lists"]))
                 i+=1
+                self.exec(query)
                 done[int(key)]=True
-                print(i, query)
-                print(i, self.exec(query))
             for row in self.exec("select * from films"):
                 if not row[0] in done:
                     self.exec("insert into %s (filmid, ownnote, tosee, seen, comment, lists) values (%d, NULL, FALSE, FALSE, '', '')" %
@@ -127,7 +202,6 @@ class SQConnector:
                     key,
                     val["name"]
                 )
-                print(query)
                 self.conn.execute(query)
             self.conn.commit()
 
@@ -145,18 +219,22 @@ class SQConnector:
                     key,
                     json.dumps(js["requests"][key])
                 )
-                print(query)
                 self.conn.execute(query)
             self.conn.commit()
 
+def create_datase(output, films, user):
+    sql=SQConnector(output)
+    sql.init_base(films)
+    sql.init_user(user, "user/%s.json" % user)
 
+if __name__ == "__main__":
+    create_datase("db/new.db", "db.json", "fanch")
+    """
+    print("xxsx")
+    sql=SQConnector("db/out.db")
 
-
-"""
-sql=SQConnector("db/tmp.db")
-
-print(sql.one("select  count(*) from films;"))
-print(tuple(map(lambda x: x[0] ,sql.conn.execute("select * from films, fanch where id=filmid and id=123").description)))
-rs=sql.find("fanch", "'thriller' in genre")
+    print(sql.one("select  count(*) from films;"))
+    print(tuple(map(lambda x: x[0] ,sql.conn.execute("select * from films, fanch where id=filmid and id=123").description)))
+    rs=sql.find("fanch", "'thriller' in genre")"""
  
-"""
+

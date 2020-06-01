@@ -273,7 +273,6 @@ class DB(SQConnector):
     def __init__(self, file):
         SQConnector.__init__(self, file)
         self.time=time.time()
-        self.init_user("fanch", "user/fanch.json")
 
     def function(self, name, args):
         return allofunction.call(self, name, args)
@@ -302,20 +301,23 @@ class DB(SQConnector):
     def length(self): return len(self.one("select count(*) from films"))
 
     def list_get(self, user):
-        ret = self.exec("select filmid, lists from %s where lists!=''" % user)
         out={}
+        ret = self.exec("select * from %s_lists" % user)
+        for row in ret:
+            print(row)
+            id=row[0]
+            name=row[1]
+            out[id] = {
+                "name": name,
+                "list": [],
+                "id": id
+            }
+
+        ret = self.exec("select filmid, lists from %s where lists!=''" % user)
         for row in ret:
             id=row[0]
             lists=row[1].split(",")
             for ids in lists:
-                if not ids in out:
-                    out[ids]={
-                        "name" : self.one("select name from %s_lists where id='%s'" % (
-                            user, ids
-                        )),
-                        "list" : [],
-                        "id" : ids
-                    }
                 out[ids]["list"].append(id)
         return out
 
@@ -334,54 +336,66 @@ class DB(SQConnector):
         return self.resultset("select filmid, lists from %s where lists like '%%%s%%'" % (user, id), pagesize=-1)
 
     def list_remove(self, user, id):
-        for row in self.exec("select id, lists from %s where lists like '%%%s%%' " % (user, id)):
+        for row in self.exec("select filmid, lists from %s where lists like '%%%s%%' " % (user, id)):
             fid = row[0]
             l = row[1].split(",")
             ll = []
             for x in l:
                 if l != id: ll.append()
-            self.exec("update %s set lists='%s' where id=%d " % (user, ",".join(ll), fid))
-        self.exec("delete from %s_lists where id=%d" % (user, id))
+            self.exec("update %s set lists='%s' where filmid=%d " % (user, ",".join(ll), fid))
+        self.exec("delete from %s_lists where id='%s'" % (user, str(id)))
+        self.conn.commit()
 
     def list_remove_item(self, user, lid, fid):
-        l=self.one("select lists from %s where id=%d " % (user, fid))
+        l=self.one("select lists from %s where filmid=%d " % (user, fid))
         ll=[]
         for tmp in l.split(","):
             if tmp!=lid: ll.append(tmp)
-        self.exec("update %s set lists='%s' where id=%d "%(user, ",".join(ll), fid))
+        self.exec("update %s set lists='%s' where filmid=%d "%(user, ",".join(ll), fid))
+        self.conn.commit()
 
     def list_add_item(self, user, fid, lid):
-        l=self.one("select lists from %s where id=%d " % (user, fid))
+        l=self.one("select lists from %s where filmid=%d " % (user, fid))
         if len(l): l+=","
         l+=lid
-        self.exec("update %s set lists='%s' where id=%d" % (user, l, fid))
+        self.exec("update %s set lists='%s' where filmid=%d" % (user, l, fid))
+        self.conn.commit()
 
     def list_create(self, user, name):
         self.exec("insert into %s_lists (id, name) values ('%s', '%s') "%(
             user, utils.new_id(), name
         ))
+        self.conn.commit()
 
     def list_rename(self, user, lid, name):
         self.exec("update %s_lists set name='%s' where id=%d" % (user, name, lid))
+        self.conn.commit()
 
     def request_add(self, user, name, value):
-        self.exec("insert into %s_requests set (name, value) values ('%s', '%s')" % (user, name,
+        self.exec("insert into %s_requests (name, value) values ('%s', '%s')" % (user, name,
                  json.dumps(value)))
+        self.conn.commit()
 
     def request_update(self, user, name, value):
         self.exec("update %s_requests set value='%s' where name='%s' " % (
             user, json.dumps(value), name
         ))
+        self.conn.commit()
 
-    def request_get(self, user):
-        out={}
-        for row in self.exec("select name,value from %s_requests" % user):
-            out[row[0]]=json.loads(row[1])
-        return out
+    def request_get(self, user, name=None):
+        if not name:
+            out={}
+            for row in self.exec("select name,value from %s_requests" % user):
+                out[row[0]]=json.loads(row[1])
+            return out
+        else:
+            return json.loads(self.one("select value from %s_requests where name='%s' " % (user, name)))
 
     def request_remove(self, user, name):
         self.exec("delete from %s_requests where name='%s'" % (user, name))
 
+    def get_film_by_id(self, user, id):
+        return self.find(user, "id=%s" % id)
 
     def append(self, row):
         if isinstance(row, (list, tuple)): row=DbRow(self.header, None, array=row)
@@ -425,16 +439,17 @@ class DB(SQConnector):
             out+=sqvalue(affs[x])
             i+=1
         self.conn.execute(out + " where id=%d" % id)
+        self.conn.commit()
 
 
     def autocomplete(self, pattern, type, max=-1):
-        query= "select name, year from films where %s like '%%%s%%' " % (type, pattern)
+        query= "select name, year, id from films where %s like '%%%s%%' " % (type, pattern)
         out={}
         if max:
             query+=" LIMIT %d" % max
 
         for row in self.exec(query):
-            out[row[0]+" ("+str(row[1])+")"]=id
+            out[row[0]+" ("+str(row[1])+")"]=row[2]
         return out
 
     def __len__(self):

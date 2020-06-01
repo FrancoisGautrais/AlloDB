@@ -111,6 +111,14 @@ class ResultSet:
         self.columns=tuple(map(lambda x: x[0] , cursor.description))
         self.process_time=time.time()-self.start_time
 
+    def sort(self, key, reverse):
+        if key=="shuffle":
+            random.shuffle(self.data)
+        else:
+            key=self.columns.index(key)
+            self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if reverse else -1)))
+
+
     def moustache(self, base={}):
         arr=[]
         index=self.page*self.pagesize
@@ -118,13 +126,13 @@ class ResultSet:
         if self.pagesize<0:
             end=len(self.data)
             index=0
-        print(index, end)
         while index<end and index<len(self.data):
             x=self.data[index]
             obj={}
             for i in range(len(self.columns)):
-                if i in [3,6,8,9,10,11]: obj[self.columns[i]]=x[i].split(';')
-                elif i in [20]: obj[self.columns[i]]=x[i].split(',')
+                if i in [3,6,8,9,10,11]: obj[self.columns[i]]=x[i].split(';') if x[i] else []
+                elif i in [20]:
+                    obj[self.columns[i]]=x[i].split(',') if x[i] else []
                 else:
                     obj[self.columns[i]]=x[i]
             arr.append(obj)
