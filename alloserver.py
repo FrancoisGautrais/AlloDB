@@ -36,7 +36,7 @@ def json_to_request(x):
         tmp="("
         arr=x["pays"]
         for i in range(len(arr)):
-            tmp+=(x["pays-op"] if i>0 else "")+' "'+unquote_plus(arr[i])+'" in nationality '
+            tmp+=(x["pays-op"] if i>0 else "")+' nationality like "%%'+unquote_plus(arr[i])+'%%" '
         l.append(tmp+")")
     #4/5 genre
     if "genre" in x and "genre-op" in x and x["genre"] != None and x["genre-op"] != None:
@@ -54,33 +54,28 @@ def json_to_request(x):
         l.append(tmp + ")")
 
     # 6 / 7 annee
-    if "year-min" in x and "year-max" in x and x["year-min"]!=None and x["year-max"]!=None: l.append(' annee in range('+str(x["year-min"])+','+str(x["year-max"])+') ')
-    elif "year-min" in x and x["year-min"]!=None: l.append(' year >= '+str(x["year-min"])+" ")
-    elif "year-max" in x and x["year-max"]!=None: l.append(' year <= '+str(x["year-max"])+" ")
+    if "year-min" in x and x["year-min"]!=None: l.append(' year >= '+str(x["year-min"])+" ")
+    if "year-max" in x and x["year-max"]!=None: l.append(' year <= '+str(x["year-max"])+" ")
 
 
     # 8 / 9 note
-    if "note-min" in x and "note-max" in x and x["note-min"]!=None and x["note-max"]!=None: l.append(' note in range('+str(x["note-min"])+','+str(x["note-max"])+') ')
-    elif "note-min" in x and x["note-min"]!=None: l.append(' note >= '+str(x["note-min"])+" ")
-    elif "note-max" in x and x["note-max"]!=None: l.append(' note <= '+str(x["note-max"])+" ")
+    if "note-min" in x and x["note-min"]!=None: l.append(' note >= '+str(x["note-min"])+" ")
+    if "note-max" in x and x["note-max"]!=None: l.append(' note <= '+str(x["note-max"])+" ")
 
     # 10 / 11 nnote
-    if "nnote-min" in x and "nnote-max" in x and x["nnote-min"]!=None and x["nnote-max"]!=None: l.append(' nnote in range('+str(x["nnote-min"])+','+str(x["nnote-max"])+') ')
-    elif "nnote-min" in x and x["nnote-min"]!=None: l.append(' nnote >= '+str(x["nnote-min"])+" ")
-    elif "nnote-max" in x and x["nnote-max"]!=None: l.append(' nnote <= '+str(x["nnote-max"])+" ")
+    if "nnote-min" in x and x["nnote-min"]!=None: l.append(' nnote >= '+str(x["nnote-min"])+" ")
+    if "nnote-max" in x and x["nnote-max"]!=None: l.append(' nnote <= '+str(x["nnote-max"])+" ")
 
     # 12 / 13 nreview
-    if "nreview-min" in x and "nreview-max" in x and x["nreview-min"]!=None and x["nreview-max"]!=None: l.append(' nreview in range('+str(x["nreview-min"])+','+str(x["nreview-max"])+') ')
-    elif "nreview-min" in x and x["nreview-min"]!=None: l.append(' nreview >= '+str(x["nreview-min"])+" ")
-    elif "nreview-max" in x and x["nreview-max"]!=None: l.append(' nreview <= '+str(x["nreview-max"])+" ")
+    if "nreview-min" in x and x["nreview-min"]!=None: l.append(' nreview >= '+str(x["nreview-min"])+" ")
+    if "nreview-max" in x and x["nreview-max"]!=None: l.append(' nreview <= '+str(x["nreview-max"])+" ")
 
     # 15 / 16 duration
-    if  "duration-min" in x and "duration-max" in x and x["duration-min"]!=None and x["duration-max"]!=None: l.append(' duration in range('+str(x["duration-min"])+','+str(x["duration-max"])+') ')
-    elif  "duration-min" in x and x["duration-min"]!=None: l.append(' duration >= '+str(x["duration-min"])+" ")
-    elif  "duration-max" in x and x["duration-max"]!=None: l.append(' duration <= '+str(x["duration-max"])+" ")
+    if  "duration-min" in x and x["duration-min"]!=None: l.append(' duration >= '+str(x["duration-min"])+" ")
+    if  "duration-max" in x and x["duration-max"]!=None: l.append(' duration <= '+str(x["duration-max"])+" ")
 
     #17
-    if "actor" in x and x["actor"]!=None: l.append('"'+unquote_plus(x["actor"])+'" in actor ')
+    if "actor" in x and x["actor"]!=None: l.append(' actor like "%%'+unquote_plus(x["actor"])+'%%" ')
 
     #18
     if "director" in x and x["director"]!=None: l.append(' director like "%%'+unquote_plus(x["director"])+'%%" ')
@@ -135,7 +130,6 @@ class AlloServer(RESTServer):
 
     def __init__(self, file):
         RESTServer.__init__(self, attrs={"mode" : HTTPServer.SPAWN_THREAD})
-        self.requests={}
         self.db = DB(file)
         self.users=self.db.get_users()
         self.sessions={}
@@ -328,7 +322,7 @@ class AlloServer(RESTServer):
         tmp = Request(self.db.row_from_director(id))
         x = tmp.result
         x.pagesize = AlloServer.RESULT_PER_PAGE
-        self.requests[x.id] = tmp
+        currentuser.request = tmp
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : id})))
 
@@ -347,7 +341,7 @@ class AlloServer(RESTServer):
         tmp = Request(self.db.row_from_actor(id))
         x = tmp.result
         x.pagesize = AlloServer.RESULT_PER_PAGE
-        self.requests[x.id] = tmp
+        currentuser.request=tmp
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, { "name" : id})))
 
@@ -361,7 +355,7 @@ class AlloServer(RESTServer):
         tmp = Request(self.db.get_film_by_id(currentuser.name,id))
         x = tmp.result
         x.pagesize = AlloServer.RESULT_PER_PAGE
-        self.requests[x.id] = tmp
+        currentuser.request = tmp
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
@@ -398,7 +392,7 @@ class AlloServer(RESTServer):
         tmp=Request(x)
         x=tmp.result
         x.pagesize = 50
-        self.requests[x.listid]=tmp
+        currentuser.request=tmp
         x.page=page
 
         self._check_query(req, x)
@@ -413,7 +407,7 @@ class AlloServer(RESTServer):
         tmp = Request(self.db.execute(short[0]))
         x = tmp.result
         x.pagesize = 10
-        self.requests[x.id] = tmp
+        currentuser.request = tmp
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : short[1]})))
 
     def handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
@@ -424,8 +418,10 @@ class AlloServer(RESTServer):
 
 
     def handle_results_export(self, req : HTTPRequest, res : HTTPResponse):
-        if "id" in req.params and req.params["id"] in self.requests:
-            x = self.requests[req.params["id"]].result
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        if "id" in req.params:
+            x = currentuser.request.result
             data=""
             format=req.params["format"]
             filename=req.params["filename"]
@@ -458,10 +454,10 @@ class AlloServer(RESTServer):
             tmp=Request(self.db.find(currentuser.name, request))
             x=tmp.result
             x.pagesize = pagesize
-            self.requests[x.id]=tmp
+            currentuser.request=tmp
         else:
-            if "id" in req.params and "page" in req.params and req.params["id"] in self.requests:
-                x=self.requests[req.params["id"]].result
+            if "id" in req.params and "page" in req.params:
+                x=currentuser.request.result
                 x.page=int(req.params["page"])-1
             else:
                 return res.serve400()
@@ -487,10 +483,8 @@ class AlloServer(RESTServer):
         tmp = Request(self.db.find(currentuser.name, request))
         x = tmp.result
         x.pagesize = args["nperpage"] if "nperpage" in args else 20
-        self.requests[x.id] = tmp
+        currentuser.request = tmp
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
-
-
 
     def handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res)

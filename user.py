@@ -12,6 +12,7 @@ class User:
         self.api=""
         self.request={}
         self.data={}
+        self.request=None
 
     def set_password(self, password):
         self.password=utils.password(password)
