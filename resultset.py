@@ -25,7 +25,7 @@ def sortkey(a, b, key, coef):
         return -1 * coef
     return 0
 
-
+"""
 class ResultSet:
 
     def __init__(self, db, col=[], order=[], set=None, pagesize=-1, page=0):
@@ -88,6 +88,69 @@ class ResultSet:
         head=self.db.header.allheader
         out=str(len(self.data))+" résultats; en "+str( int(self.process_time*1000000)/1000)+" ms\n"
         out+=str(self.db.header.format(head))+"\n"
+        out+=str(self.db.header.format(head))+"\n"
         for x in self.data:
             out+=x.format(head)+"\n"
+        return out
+"""
+
+
+class ResultSet:
+
+    def __init__(self, pagesize=-1, page=0):
+        self.id=utils.new_id()
+        self.start_time=time.time()
+        self.process_time=0
+        self.columns=()
+        self.pagesize=pagesize
+        self.page=page
+        self.data=[]
+
+    def set_results(self, cursor):
+        self.data=cursor.fetchall()
+        self.columns=tuple(map(lambda x: x[0] , cursor.description))
+        self.process_time=time.time()-self.start_time
+
+    def moustache(self, base={}):
+        arr=[]
+        index=self.page*self.pagesize
+        end=(self.page+1)*self.pagesize
+        if self.pagesize<0:
+            end=len(self.data)
+            index=0
+        print(index, end)
+        while index<end and index<len(self.data):
+            x=self.data[index]
+            obj={}
+            for i in range(len(self.columns)):
+                if i in [3,6,8,9,10,11]: obj[self.columns[i]]=x[i].split(';')
+                elif i in [20]: obj[self.columns[i]]=x[i].split(',')
+                else:
+                    obj[self.columns[i]]=x[i]
+            arr.append(obj)
+            index+=1
+        return utils.dictassign({
+            "count" : len(self.data),
+            "time" : int(self.process_time*1000)/1000,
+            "data" : arr,
+            "page" : self.page,
+            "nperpage" : self.pagesize,
+            "id" : self.id,
+            "npages" : 1 if self.pagesize<=0 else (int(len(self.data)/self.pagesize)+ (1 if len(self.data)%self.pagesize>0 else 0)),
+            "payslist": alloimport.ID_TO_PAYS
+        }, base)
+
+
+    def row_at(self, n):
+        return self.data[n]
+
+    def __len__(self): return len(self.data)
+
+    def __repr__(self):
+        return self.__str__()
+
+    def __str__(self):
+        out=str(len(self.data))+" résultats; en "+str( int(self.process_time*1000000)/1000)+" ms\n"
+        for x in self.data:
+            out+=str(x)+"\n"
         return out

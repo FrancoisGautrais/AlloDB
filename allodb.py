@@ -1,7 +1,10 @@
 from resultset import ResultSet
 import json
+from allolist import AlloListSet
+from sqlite_connector import SQConnector, sqvalue
 import os
 import sys
+import utils
 import time
 import traceback
 from allodbrow import DbRow, DbHeader
@@ -242,7 +245,7 @@ payslist={
 xx={'uk': (7313, 'britannique'), 'in': (1431, 'indien'), 'fr': (30204, 'français'), 'us': (37378, 'américain'), 'eg': (343, 'égyptien'), 'gr': (354, 'grec'), 'de': (6071, 'allemand'), 'se': (876, 'suédois'), 'sn': (95, 'sénégalais'), 'ca': (4339, 'canadien'), 'ch': (1257, 'suisse'), 'at': (731, 'autrichien'), 'cf': (77, 'centrafricain'), 'hk': (1061, 'hong-kongais'), 'it': (5518, 'italien'), 'kr': (901, 'sud-coréen'), 'af': (30, 'afghan'), 'cn': (1091, 'chinois'), 'br': (1058, 'brésilien'), 'pl': (652, 'polonais'), 'ar': (773, 'argentin'), 'ir': (479, 'iranien'), 'tr': (975, 'turc'), 'jp': (2806, 'japonais'), 'fi': (520, 'finlandais'), 'ru': (1198, 'russe'), 'rs': (112, 'serbe'), 'bg': (145, 'bulgare'), 'mk': (25, 'macédonien'), 'dz': (212, 'algérien'), 'be': (2324, 'belge'), 'ro': (290, 'roumain'), 'za': (245, 'sud-africain'), 'mx': (861, 'mexicain'), 'ua': (96, 'ukrainien'), 'dk': (725, 'danois'), 'ba': (55, 'bosniaque'), 'my': (43, 'malaisien'), 'cu': (174, 'cubain'), 'es': (2933, 'espagnol'), 'ie': (468, 'irlandais'), 'no': (397, 'norvégien'), 'hu': (500, 'hongrois'), 'cz': (561, 'tchécoslovaque'), 'sk': (155, 'slovaque'), 'pk': (33, 'pakistanais'), 'au': (1088, 'australien'), 'il': (674, 'israélien'), 'nz': (274, 'néo-zélandais'), 'sy': (58, 'syrien'), 'pt': (534, 'portugais'), 'uy': (69, 'uruguayen'), 'bf': (46, 'burkinabé'), 'is': (146, 'islandais'), 'tn': (181, 'tunisien'), 'pe': (127, 'péruvien'), 'lt': (97, 'lituanien'), 'ph': (213, 'philippin'), 'lu': (248, 'luxembourgeois'), 'tw': (253, 'taïwanais'), 'su': (183, 'soviétique'), 'cl': (248, 'chilien'), 'nl': (673, 'néerlandais'), 'ci': (32, 'ivoirien'), 'ge': (73, 'géorgien'), 'np': (14, 'népalais'), 'co': (185, 'colombien'), 'si': (62, 'slovène'), 'ye': (7, 'yéménite'), 'ng': (12, 'nigérien'), 'bj': (23, 'béninois'), '': (140, 'émirati'), 'ma': (259, 'marocain'), 'yu': (160, 'yougoslave'), 'li': (14, 'liechtensteinois'), 'qa': (92, 'qatarien'), 'ml': (36, 'malien'), 'cy': (22, 'chypriote'), 'hr': (112, 'croate'), 'lb': (237, 'libanais'), 'id': (74, 'indonésien'), 'sa': (8, 'saoudien'), 'sg': (69, 'singapourien'), 'th': (180, 'thaïlandais'), 'vn': (72, 'vietnamien'), 'mn': (19, 'mongol'), 'cg': (30, 'congolais'), 'ht': (51, 'haïtien'), 'bw': (4, 'botswanais'), 'kz': (62, 'kazakh'), 'gn': (19, 'guinéen'), 'mc': (8, 'Monegasque'), 'lk': (28, 'sri-lankais'), 'me': (8, 'monténégrin'), 'az': (13, 'azerbaïdjanais'), 'ee': (105, 'estonien'), 've': (94, 'vénézuélien'), 'ne': (55, 'nigérian'), 'lv': (97, 'letton'), 'dm': (24, 'dominicain'), 'ps': (100, 'palestinien'), 'mg': (12, 'malgache'), 'tj': (21, 'tadjik'), 'cm': (33, 'camerounais'), 'kh': (41, 'cambodgien'), 'sz': (4, 'swazi'), 'jm': (14, 'jamaïcain'), 'ni': (7, 'nicaraguéen'), 'gh': (10, 'ghanéen'), 'bh': (2, 'bahreini'), 'bo': (28, 'bolivien'), 'jo': (22, 'jordanien'), 'pr': (24, 'portoricain'), 'py': (12, 'paraguayen'), 'ag': (2, 'antiguais'), 'mr': (17, 'mauritanien'), 'rw': (8, 'rwandais'), 'ug': (7, 'ougandais'), 'kw': (12, 'kowetien'), 'al': (20, 'albanais'), 'ga': (9, 'gabonais'), 'td': (17, 'tchadien'), 'ke': (25, 'Kenyan'), 'zm': (6, 'zambien'), 'kg': (29, 'kirghiz'), 'am': (37, 'arménien'), 'ao': (8, 'angolais'), 'iq': (31, 'Irakien'), 'sd': (7, 'soudanais'), 'et': (13, 'éthiopien'), 'mu': (3, 'mauriciens'), 'gt': (19, 'guatémaltèque'), 'ec': (27, 'équatorien'), 'tg': (6, 'togolais'), 'pa': (12, 'panaméen'), 'sr': (1, 'surinamien'), 'la': (4, 'laotien'), 'bb': (2, 'barbadien'), 'tt': (3, 'trinidadiens'), 'bz': (4, 'belizien'), 'cr': (8, 'Costaricain'), 'uz': (7, 'ouzbek'), 'ly': (3, 'libyen'), 'kp': (14, 'nord-coréen'), 'md': (1, 'moldave'), 'na': (3, 'namibien'), 'hn': (3, 'hondurien'), 'mz': (9, 'mozambiquais'), 'tm': (1, 'turkmène'), 'pg': (5, 'papouan-néo guinéen'), 'so': (3, 'somalien'), 'mw': (3, 'malawites'), 'tz': (10, 'tanzanien'), 'bs': (2, 'bahaméen'), 'lr': (4, 'libérien'), 'bt': (5, 'bhoutanais'), 'mt': (6, 'maltais'), 'sl': (1, 'sierra-léonais'), 'ad': (1, 'andorran'), 'dj': (1, 'djiboutiens'), 'bi': (2, 'burundais'), 'to': (1, 'tongien'), 'bm': (1, 'Bermudien')}
 
 
-class DB:
+class DB(SQConnector):
     COLUMNS=[
                            ("id", None, -1, "id"),
                            ("name", None, "", "name"),
@@ -267,64 +270,117 @@ class DB:
         for x in DB.COLUMNS: out.append(x[3])
         return out
 
-    def __init__(self, root, file=None, userdata=None):
-        self.file=file
-        self.header=None
-        self.needsave=False
-        self.userdata=userdata
-        self.last_id=0
-        self.data=[]
-        self.ids={}
-        self.actors={}
-        self.directors={}
-        self.pays={}
+    def __init__(self, file):
+        SQConnector.__init__(self, file)
         self.time=time.time()
-        self.header=DbHeader(self, userdata, array=DB.COLUMNS_NAME())
-
-        if root:
-            self.ids=root.ids
-            self.actors=root.actors
+        self.init_user("fanch", "user/fanch.json")
 
     def function(self, name, args):
         return allofunction.call(self, name, args)
 
-    def row_from_id(self, id):
-        rs = ResultSet(self)
-        rs.put(self.ids[id] if (id in self.ids) else [])
-        return rs.close()
+    def row_from_id(self, user, id):
+        return self.find(user, "id=%d" % id)
 
-    def row_from_actor(self, act):
-        return  ResultSet(self, set=self.actors[act] if (act in self.actors) else []).close()
+    def row_from_actor(self, user, act):
+        return self.find(user, "'%s' in actor" % act)
 
     def row_from_director(self, dir):
-        return  ResultSet(self, set=self.directors[dir] if (dir in self.directors) else []).close()
+        return self.find(user, "'%s' in director" % dir)
 
     def row_from_nationality(self, pays):
-        return  ResultSet(self, set=self.pays[pays] if (pays in self.pays) else []).close()
+        return self.find(user, "'%s' in nationality" % pays)
 
 
-    def list_pays(self):
-        out=[]
-        for x in  self.data:
-            payss=x.resolve("nationality")
-            if payss:
-                tmp=[]
-                for pays in payss:
-                    tmp.append(payslist[pays])
-                x.data[3]=tmp
-        return out
 
     def __str__(self):
-        head=self.header.allheader()
-        out=str(self.length())+" résultats en "+str( int(self.time*1000000)/1000)+" ms\n"
-        out+=str(self.header.format(head))+"\n"
-        for x in self.data:
-            out+=x.format(head)+"\n"
-        return out
+        return str(self.length())+" résultats en "+str( int(self.time*1000000)/1000)+" ms\n"
+
 
     def __repr__(self): return self.__str__()
 
-    def length(self): return len(self.data)
+
+    def length(self): return len(self.one("select count(*) from films"))
+
+    def list_get(self, user):
+        ret = self.exec("select filmid, lists from %s where lists!=''" % user)
+        out={}
+        for row in ret:
+            id=row[0]
+            lists=row[1].split(",")
+            for ids in lists:
+                if not ids in out:
+                    out[ids]={
+                        "name" : self.one("select name from %s_lists where id='%s'" % (
+                            user, ids
+                        )),
+                        "list" : [],
+                        "id" : ids
+                    }
+                out[ids]["list"].append(id)
+        return out
+
+    def list_get_films(self, user, id):
+        cur=self.conn.cursor()
+        cur.execute("select * from films,%s where filmid=id and lists like '%%%s%%'" % (
+            user, id
+        ))
+        als=AlloListSet()
+        als.set_list(cur, id, self.one("select name from %s_lists where id='%s' "%(
+            user, id
+        )))
+        return als
+
+    def get_list_by_id(self, user, id):
+        return self.resultset("select filmid, lists from %s where lists like '%%%s%%'" % (user, id), pagesize=-1)
+
+    def list_remove(self, user, id):
+        for row in self.exec("select id, lists from %s where lists like '%%%s%%' " % (user, id)):
+            fid = row[0]
+            l = row[1].split(",")
+            ll = []
+            for x in l:
+                if l != id: ll.append()
+            self.exec("update %s set lists='%s' where id=%d " % (user, ",".join(ll), fid))
+        self.exec("delete from %s_lists where id=%d" % (user, id))
+
+    def list_remove_item(self, user, lid, fid):
+        l=self.one("select lists from %s where id=%d " % (user, fid))
+        ll=[]
+        for tmp in l.split(","):
+            if tmp!=lid: ll.append(tmp)
+        self.exec("update %s set lists='%s' where id=%d "%(user, ",".join(ll), fid))
+
+    def list_add_item(self, user, fid, lid):
+        l=self.one("select lists from %s where id=%d " % (user, fid))
+        if len(l): l+=","
+        l+=lid
+        self.exec("update %s set lists='%s' where id=%d" % (user, l, fid))
+
+    def list_create(self, user, name):
+        self.exec("insert into %s_lists (id, name) values ('%s', '%s') "%(
+            user, utils.new_id(), name
+        ))
+
+    def list_rename(self, user, lid, name):
+        self.exec("update %s_lists set name='%s' where id=%d" % (user, name, lid))
+
+    def request_add(self, user, name, value):
+        self.exec("insert into %s_requests set (name, value) values ('%s', '%s')" % (user, name,
+                 json.dumps(value)))
+
+    def request_update(self, user, name, value):
+        self.exec("update %s_requests set value='%s' where name='%s' " % (
+            user, json.dumps(value), name
+        ))
+
+    def request_get(self, user):
+        out={}
+        for row in self.exec("select name,value from %s_requests" % user):
+            out[row[0]]=json.loads(row[1])
+        return out
+
+    def request_remove(self, user, name):
+        self.exec("delete from %s_requests where name='%s'" % (user, name))
 
 
     def append(self, row):
@@ -359,94 +415,31 @@ class DB:
         self.needsave=True
         return True
 
-    def commit(self):
-        if self.needsave:
-            self.save(self.file)
-        if self.userdata.changed():
-            self.userdata.save()
-        self.needsave=False
 
-    def set(self, affs, expr):
-        rows=self.match(expr)
-        for x in rows.data:
-            x.set(affs)
+    def set(self, user, affs, id):
+        out="update %s set " % user
+        i=0
+        for x in affs:
+            if i>0: out+=", "
+            out+=x+"="
+            out+=sqvalue(affs[x])
+            i+=1
+        self.conn.execute(out + " where id=%d" % id)
 
-    def execute(self, expr):
-        if isinstance(expr, str): expr=Parser.parsestring(expr, self.userdata)
-        if isinstance(expr, alloexpr.BlocExpr):
-            ret=None
-            for x in expr.insts:
-                ret=self.execute(x)
-            return ret
-
-        if isinstance(expr, alloexpr.SetExpr):
-            aff=expr.afflist
-            ex=expr.expr
-            return self.set(aff, ex)
-        elif isinstance(expr, alloexpr.ArrayExpr): return self.put(expr)
-        elif isinstance(expr, alloexpr.SelectExpr): return self.match(expr)
-        return expr.val(self)
-
-    def emptyset(self):
-        return ResultSet(self)
-
-    def row_at(self, n):
-        return self.data[n]
-
-    def match(self, expr):
-        out=None
-        if isinstance(expr, alloexpr.SelectExpr):
-            out=ResultSet(self, col=expr.select, order=expr.order)
-        else:
-            out=ResultSet(self)
-
-        for row in self.data:
-            if expr.val(row):
-                out.put(row)
-
-        out.close()
-
-        return out
 
     def autocomplete(self, pattern, type, max=-1):
-        if max<=0: max=len(self.data)
-        col = self.header[type]
-        year = self.header["year"]
-        base = None
+        query= "select name, year from films where %s like '%%%s%%' " % (type, pattern)
+        out={}
+        if max:
+            query+=" LIMIT %d" % max
 
-        pattern=pattern.lower()
-        out=[]
-        if type=="name":
-            out={}
-            for id in self.ids:
-                row=self.ids[id][col].lower()
-                if len(out) > max: break
-                if row.lower().find(pattern)>=0:
-                    out[row+" ("+str(self.ids[id][year])+")"]=id
-        else:
-            if type=="actor": base=self.actors
-            elif type=="director": base=self.directors
-            else: raise Exception("Column '"+type+"' not found")
-            for row in base:
-                if len(out)>max: break
-                if row.lower().find(pattern)>=0:
-                    out.append(row)
+        for row in self.exec(query):
+            out[row[0]+" ("+str(row[1])+")"]=id
         return out
 
     def __len__(self):
         return len(self.data)
 
-
-    def list_array_field_value(self, field):
-        out={}
-        for row in self.data:
-            names=row.resolve(field)
-            if names:
-                for name in names:
-                    name=name.lower()
-                    if not name in out:
-                        out[name]=True
-        return out.keys()
 
 
     @staticmethod
@@ -479,9 +472,6 @@ class DB:
             "last_id" : self.last_id
         }
 
-    def save(self, file):
-        with open(file, "w") as f:
-            f.write(json.dumps(self.tojson()))
 
 
     def extract_html_dir(self, dir):

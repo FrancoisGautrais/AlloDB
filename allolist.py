@@ -6,13 +6,10 @@ from resultset import ResultSet
 
 class AlloListSet(ResultSet):
 
-    def set_list(self, db, listid, listname, list):
+    def set_list(self, cursor, listid, listname):
         self.listid=listid
         self.name=listname
-        self.list=list
-        for x in self.list:
-            self.put(db.ids[x])
-        return self.close()
+        self.set_results(cursor)
 
     def moustache(self, base={}):
         return utils.dictassign(ResultSet.moustache(self, base),{
@@ -31,7 +28,7 @@ class AlloList:
         self.list=js["list"] if js else []
 
     def result_set(self, db, order_type=[], order=[]):
-        return AlloListSet(db, order_type, order).set_list(db, self.id, self.name, self.list)
+        return AlloListSet(order_type, order).set_list(db, self.id, self.name, self.list)
 
     def remove(self, idfilm):
         self.list.remove(idfilm)

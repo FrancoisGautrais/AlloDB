@@ -129,13 +129,13 @@ class AlloServer(RESTServer):
         RESTServer.__init__(self, attrs={"mode" : HTTPServer.SPAWN_THREAD})
         self.requests={}
         self.user = user
-        self.db = DB.fromjson("db.json", self.user)
+        self.db = DB("db/tmp.db")
         self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
         self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
         self.route("GET", "/userlist", lambda req, res: res.serve_file_gen(config.www("user_list.html"), self.userlist_object()))
         self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html"), self.userlist_object()))
         self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html"), self.userlist_object()))
-        self.route("GET", "/save", lambda req, res: self.db.userdata.save())
+
         self.route("POST", "/import", self.handle_import)
         self.route("GET", "/export", self.handle_export)
         self.route("GET", "/director/#id", self.handle_director)
@@ -199,53 +199,38 @@ class AlloServer(RESTServer):
 
 
     def handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
-        x=self.db.userdata.list_json()
+        x=self.db.list_get()
         res.end(x, "application/json")
 
     def handle_list_create(self, req: HTTPRequest, res: HTTPResponse):
         name=req.params["name"]
         l=AlloList(name=name)
-        self.db.userdata.lists[l.id]=l
-        res.end(l.json(), "application/json")
-        self.db.userdata.save()
+        self.db.list_create("fanch", name)
 
     def handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
         id=req.params["idl"]
-        x=self.db.userdata.list_get_by_id(id)
+        x=self.db.get_list_by_id("fanch", id)
         if x:
-            res.end(x.json_set(self.db), "application/json")
+            res.end(x.moustache(), "application/json")
+            raise Exception("ICI")
         else:
             res.serve404()
 
     def handle_list_remove(self, req: HTTPRequest, res: HTTPResponse):
         id = req.params["idl"]
-        self.db.userdata.list_remove(id)
-        self.db.userdata.save()
+        self.db.list_remove("fanch", id)
 
     def handle_list_add(self, req: HTTPRequest, res: HTTPResponse):
         id = req.params["idl"]
         idfilm = req.params["idfilm"]
-        if not self.db.userdata.add_to_list(idfilm, id):
-            res.serve404()
-        else: self.db.userdata.save()
+        self.db.list_add_item("user", idfilm, id)
+
 
     def handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
-        id = req.params["idl"]
-        idfilm = req.params["idfilm"]
-        x = self.db.userdata.list_get_by_id(id)
-        if x:
-            x.up(idfilm)
-            self.db.userdata.save()
-        else: res.serve404()
+        pass
 
     def handle_list_down(self, req: HTTPRequest, res: HTTPResponse):
-        id = req.params["idl"]
-        idfilm = req.params["idfilm"]
-        x = self.db.userdata.list_get_by_id(id)
-        if x:
-            x.down(idfilm)
-            self.db.userdata.save()
-        else: res.serve404()
+        pass
 
     def handle_list_rename(self, req: HTTPRequest, res: HTTPResponse):
         id = req.params["idl"]
@@ -333,11 +318,11 @@ class AlloServer(RESTServer):
         row.set(out)
 
     def userlist_object(self, *args):
-        x=self.db.userdata.list_json()
+        x=self.db.list_get("fanch")
         l=[]
         for i in x: l.append(i)
 
-        xr = self.db.userdata.requests
+        xr = self.db.request_get("fanch")
         lr=[]
         for i in xr: lr.append(i)
         return dictassign({ "user_list" : x,
@@ -351,17 +336,16 @@ class AlloServer(RESTServer):
         pagesize = AlloServer.RESULT_PER_PAGE
         if "page" in req.params: page=int(req.params["page"]-1)
         id = req.params["id"]
-        if id in self.db.userdata.lists:
-            tmp=Request(self.db.userdata.lists[id].result_set(self.db))
-            x=tmp.result
-            x.pagesize = 50
-            self.requests[x.listid]=tmp
-            x.page=page
+        x=self.db.list_get_films("fanch", id)
+        tmp=Request(x)
+        x=tmp.result
+        x.pagesize = 50
+        self.requests[x.listid]=tmp
+        x.page=page
 
-            self._check_query(req, x)
-            res.serve_file_gen(path, x.moustache(self.userlist_object()))
-        else:
-            res.serve404()
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+
 
     def handle_short(self, req : HTTPRequest, res : HTTPResponse):
         path = config.www("results.html")
