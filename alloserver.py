@@ -17,7 +17,8 @@ from http_server.log import Log
 from http_server.restserver import RESTServer, HTTPRequest, HTTPResponse
 from http_server import log, utils
 from http_server.filecache import  filecache
-from utils import dictassign, dictcopy
+from utils import dictassign, dictcopy, new_key
+import utils
 
 def default(js, key, fct=None, default=None):
     x=js[key]
@@ -28,7 +29,7 @@ def default(js, key, fct=None, default=None):
 def json_to_request(x):
     l=[]
     # 1 match
-    if "match" in x and x["match"]!=None: l.append('"'+unquote_plus(x["match"])+'" in name ')
+    if "match" in x and x["match"]!=None: l.append(' name like "%%'+unquote_plus(x["match"])+'%%" ')
 
     # 2/3 pays
     if "pays" in x and "pays-op" in x and x["pays"]!=None and x["pays-op"]!=None:
@@ -42,14 +43,14 @@ def json_to_request(x):
         tmp = "("
         arr = x["genre"]
         for i in range(len(arr)):
-            tmp += (x["genre-op"] if i > 0 else "") + ' "' + unquote_plus(arr[i]) + '" in genre '
+            tmp += (x["genre-op"] if i > 0 else "") + ' genre like "%%' + unquote_plus(arr[i]) + '%%"  '
         l.append(tmp + ")")
 
     if "userlist" in x and "userlist-op" in x and x["userlist"] != None and x["userlist-op"] != None:
         tmp = "("
         arr = x["userlist"]
         for i in range(len(arr)):
-            tmp += (x["userlist-op"] if i > 0 else "") + ' "' + unquote_plus(arr[i]) + '" in lists '
+            tmp += (x["userlist-op"] if i > 0 else "") + ' lists like "%%' + unquote_plus(arr[i]) + '%%" '
         l.append(tmp + ")")
 
     # 6 / 7 annee
@@ -82,7 +83,7 @@ def json_to_request(x):
     if "actor" in x and x["actor"]!=None: l.append('"'+unquote_plus(x["actor"])+'" in actor ')
 
     #18
-    if "director" in x and x["director"]!=None: l.append('"'+unquote_plus(x["director"])+'" in director ')
+    if "director" in x and x["director"]!=None: l.append(' director like "%%'+unquote_plus(x["director"])+'%%" ')
 
     #19
     if "tosee" in x and x["tosee"]!=None: l.append(' tosee '+("=" if x["tosee"] else "!=") + " True ")
@@ -125,15 +126,26 @@ class AlloServer(RESTServer):
         "seen"  : ("select * where seen = True order by note desc", "Vus")
     }
 
+    def serve(self, req, res, file):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
+
+
+
     def __init__(self, file):
         RESTServer.__init__(self, attrs={"mode" : HTTPServer.SPAWN_THREAD})
         self.requests={}
         self.db = DB(file)
-        self.route("GET", "/", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
-        self.route("GET", "/index.html", lambda req, res: res.serve_file_gen(config.www("index.html"), self.userlist_object()))
-        self.route("GET", "/userlist", lambda req, res: res.serve_file_gen(config.www("user_list.html"), self.userlist_object()))
-        self.route("GET", "/request", lambda req, res: res.serve_file_gen(config.www("request.html"), self.userlist_object()))
-        self.route("GET", "/import", lambda req, res: res.serve_file_gen(config.www("import.html"), self.userlist_object()))
+        self.users=self.db.get_users()
+        self.sessions={}
+        self.route("GET", "/", lambda req, res: self.serve(req, res, "index.html"))
+        self.route("GET", "/index.html", lambda req, res: self.serve(req, res, "index.html"))
+        self.route("GET", "/userlist", lambda req, res: self.serve(req, res, "user_list.html"))
+        self.route("GET", "/request", lambda req, res: self.serve(req, res, "request.html"))
+        self.route("GET", "/login",  lambda req, res: res.serve_file_gen(config.www("login.html")))
+        self.route("POST", "/login",  self.handle_post_login)
+        self.route("GET", "/import", lambda req, res: self.serve(req, res, "import.html"))
 
         self.route("POST", "/import", self.handle_import)
         self.route("GET", "/export", self.handle_export)
@@ -178,6 +190,31 @@ class AlloServer(RESTServer):
 
         self.static("/", config.WWW_DIR)
 
+    def set_new_session(self, user):
+        """for key in list(self.sessions.keys()):
+            if self.sessions[key]==self.users[user]:
+                del self.sessions[key]"""
+        cookie=new_key(4)
+        self.sessions[cookie]=self.users[user]
+        return cookie
+
+    def get_user(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
+        log.error("get_user(%s)" % str(tuple(req.cookies.keys())))
+        if "SID" in req.cookies:
+            cookie=req.cookies["SID"]
+            if cookie in self.sessions:
+                log.error("Authentification OK")
+                return self.sessions[cookie]
+            log.error("Authentification FAIL '%s' not in (%s)" % (cookie, str(tuple(self.sessions.keys()))))
+        else:
+            log.error("Authentification FAIL pas de SID")
+        if isjson:
+            res.content_type("application/json")
+            res.serveJson({ "message" : "Erreur, session invalide", "code": 401}, 401)
+        else:
+            res.serve301("/login")
+        return None
+
     def handle_nop(self, req: HTTPRequest, res: HTTPResponse):
         self.stop()
         pass
@@ -187,6 +224,8 @@ class AlloServer(RESTServer):
         requests.get("http://localhost:%d/nop" % self._port)
 
     def handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id=req.params["id"]
         if str(id) in self.db.ids:
             row=self.db.ids[str(id)]
@@ -196,20 +235,38 @@ class AlloServer(RESTServer):
             res.end(filmfinder.find_film(title, year), "application/json")
         else: res.serve404()
 
+    def handle_post_login(self, req: HTTPRequest, res: HTTPResponse):
+        js=req.body_json()
+        user=js["login"]
+        password=js["password"]
+        res.content_type("application/json")
+        if user in self.users:
+            if utils.check_password(password, self.users[user].password):
+                cookie = self.set_new_session(user)
+                res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
+                res.end({})
+                return
+        res.serve401(data={"message" : "Login ou mot de passe invalide"})
+
 
     def handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
-        x=self.db.list_get('fanch')
-        print(x)
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        x=self.db.list_get(currentuser.name)
         res.end(x, "application/json")
 
     def handle_list_create(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         name=req.params["name"]
         l=AlloList(name=name)
-        self.db.list_create("fanch", name)
+        self.db.list_create("fanch", currentuser.name)
 
     def handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id=req.params["idl"]
-        x=self.db.get_list_by_id("fanch", id)
+        x=self.db.get_list_by_id(currentuser.name, id)
         if x:
             res.end(x.moustache(), "application/json")
             raise Exception("ICI")
@@ -217,13 +274,17 @@ class AlloServer(RESTServer):
             res.serve404()
 
     def handle_list_remove(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id = req.params["idl"]
-        self.db.list_remove("fanch", id)
+        self.db.list_remove(currentuser.name, id)
 
     def handle_list_add(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id = req.params["idl"]
         idfilm = req.params["idfilm"]
-        self.db.list_add_item("fanch", int(idfilm), id)
+        self.db.list_add_item(currentuser.name, int(idfilm), id)
 
 
     def handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
@@ -233,14 +294,18 @@ class AlloServer(RESTServer):
         pass
 
     def handle_list_rename(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id = req.params["idl"]
         name = req.params["name"]
-        self.db.list_rename("fanch", id, name)
+        self.db.list_rename(currentuser.name, id, name)
 
     def handle_list_remove_item(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id = req.params["idl"]
         idfilm = int(req.params["idfilm"])
-        self.db.list_remove_item("fanch", id, idfilm)
+        self.db.list_remove_item(currentuser.name, id, idfilm)
 
     def _check_query(self, req, query):
         if "type" in req.query:
@@ -255,6 +320,8 @@ class AlloServer(RESTServer):
         pass
 
     def handle_director(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         id=req.params["id"].replace("+", " ")
         if not id in self.db.directors: return res.serve404()
         path = config.www("results.html")
@@ -263,7 +330,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object({"name" : id})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : id})))
 
     def handle_import(self, req: HTTPRequest, res: HTTPResponse):
         f=req.multipart_next_file()
@@ -272,6 +339,8 @@ class AlloServer(RESTServer):
         pass
 
     def handle_actor(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         id=req.params["id"].replace("+", " ")
         if not id in self.db.actors: return res.serve404()
         path = config.www("results.html")
@@ -280,39 +349,36 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object({ "name" : id})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, { "name" : id})))
 
 
     def handle_film(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
         id=req.params["id"]
 
         path = config.www("film.html")
-        tmp = Request(self.db.get_film_by_id('fanch',id))
+        tmp = Request(self.db.get_film_by_id(currentuser.name,id))
         x = tmp.result
         x.pagesize = AlloServer.RESULT_PER_PAGE
         self.requests[x.id] = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
     def handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
-        id=req.params["id"]
-        if not id in self.db.ids: return res.serve404()
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id=int(req.params["id"])
         js = req.body_json()
         if not js: return res.serve400()
+        self.db.set(currentuser.name, js, id)
 
-        row = self.db.ids[id]
-        out=[]
-        for x in js:
-            out.append((x, js[x]))
-
-        row.set(out)
-
-    def userlist_object(self, *args):
-        x=self.db.list_get("fanch")
+    def userlist_object(self, name, *args):
+        x=self.db.list_get(name)
         l=[]
         for i in x: l.append(i)
 
-        xr = self.db.request_get("fanch")
+        xr = self.db.request_get(name)
         lr=[]
         for i in xr: lr.append(i)
         return dictassign({ "user_list" : x,
@@ -321,12 +387,14 @@ class AlloServer(RESTServer):
                             "requests_list" : lr}, *args)
 
     def handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         path = config.www("results.html")
         page = 0
         pagesize = AlloServer.RESULT_PER_PAGE
         if "page" in req.params: page=int(req.params["page"]-1)
         id = req.params["id"]
-        x=self.db.list_get_films("fanch", id)
+        x=self.db.list_get_films(currentuser.name, id)
         tmp=Request(x)
         x=tmp.result
         x.pagesize = 50
@@ -334,17 +402,19 @@ class AlloServer(RESTServer):
         x.page=page
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
 
     def handle_short(self, req : HTTPRequest, res : HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         path = config.www("results.html")
         short=AlloServer.SHORT_REQUESTS[req.params["id"]]
         tmp = Request(self.db.execute(short[0]))
         x = tmp.result
         x.pagesize = 10
         self.requests[x.id] = tmp
-        res.serve_file_gen(path, x.moustache(self.userlist_object({"name" : short[1]})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : short[1]})))
 
     def handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
         type = req.params["type"]
@@ -371,6 +441,8 @@ class AlloServer(RESTServer):
             return res.serve400()
 
     def handle_results(self, req : HTTPRequest, res : HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         path = config.www("results.html")
         request = ""
         pagesize = AlloServer.RESULT_PER_PAGE
@@ -383,7 +455,7 @@ class AlloServer(RESTServer):
                 request=json_to_request(bodyjson)
             elif "text" in body:
                 request=unquote_plus(body["text"])
-            tmp=Request(self.db.find('fanch', request))
+            tmp=Request(self.db.find(currentuser.name, request))
             x=tmp.result
             x.pagesize = pagesize
             self.requests[x.id]=tmp
@@ -395,39 +467,43 @@ class AlloServer(RESTServer):
                 return res.serve400()
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
     def handle_get_request(self, req: HTTPRequest, res: HTTPResponse):
-        res.serve_file_gen(config.www("index.html"), self.userlist_object({
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        res.serve_file_gen(config.www("index.html"), self.userlist_object(currentuser.name,{
             "run" : req.params["name"]
         }))
 
     def handle_run_request(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
         path = config.www("results.html")
         name = req.params["name"]
         #args = self.db.userdata.requests[name]["values"]
-        args = self.db.request_get('fanch', name)
+        args = self.db.request_get(currentuser.name, name)
         request = json_to_request(args)
-        tmp = Request(self.db.find("fanch", request))
+        tmp = Request(self.db.find(currentuser.name, request))
         x = tmp.result
         x.pagesize = args["nperpage"] if "nperpage" in args else 20
         self.requests[x.id] = tmp
-        res.serve_file_gen(path, x.moustache(self.userlist_object()))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
 
 
     def handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
-        self.db.request_add('fanch', req.params["name"], req.body_json())
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        self.db.request_add(currentuser.name, req.params["name"], req.body_json())
 
     def handle_delete_request(self, req: HTTPRequest, res: HTTPResponse):
-        self.db.request_remove("fanch", req.params["name"])
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        self.db.request_remove(currentuser.name, req.params["name"])
 
 filecache.init()
-usr = None
-if os.path.exists(config.user("fanch")):
-    usr = user.User.fromjsonfile("fanch")
-else:
-    usr= user.User.createuser("fanch")
+
 
 browser=None
 port=8080
@@ -450,9 +526,11 @@ if len(sys.argv)>2:
 
 
 Log.init()
-
+"""
 from sqlite_connector import create_datase
-create_datase("db/allodb.db", "db.json", "fanch")
+create_datase("db/allodb.db", "db.json", "fanch")"""
+
+
 als = AlloServer("db/allodb.db")
 if not browser:
     als.listen(port)

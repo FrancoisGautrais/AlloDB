@@ -1,7 +1,6 @@
 import uuid
 
 import utils
-from allodbrow import DbRow
 from resultset import ResultSet
 
 class AlloListSet(ResultSet):

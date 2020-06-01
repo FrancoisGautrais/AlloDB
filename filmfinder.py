@@ -101,7 +101,6 @@ class ZoneTelechargementFinder(FilmFinder):
     }
     def do_find(self):
         req = requests.post("https://www.zone-warez.com/index.php?do=search", "do=search&subaction=search&search_start=0&full_search=1&result_from=1&story="+utils.urlencode(self.title)+"&titleonly=0&searchuser=&replyless=0&replylimit=0&searchdate=0&beforeafter=after&sortby=date&resorder=desc&showposts=1&catlist%5B%5D=2&user_hash=636b4560bb73a51b506836d8293f5770506a68d0", headers=ZoneTelechargementFinder.HEAD)
-        print(req.content)
         dom = etree.HTML(req.content)
         out=[]
         for elem in (dom.xpath('//div[@class="mov"]')):

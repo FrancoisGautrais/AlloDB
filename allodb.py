@@ -7,20 +7,9 @@ import sys
 import utils
 import time
 import traceback
-from allodbrow import DbRow, DbHeader
-from functools import cmp_to_key
-
 import allofunction
 import user
-import alloexpr
-import requests
-
 import alloimport
-from alloexpr import Expr
-from allolexer import Lexer
-from io import StringIO
-
-from alloparser import Parser
 
 genrelist={
     "comédie" : "comédie",
@@ -304,7 +293,6 @@ class DB(SQConnector):
         out={}
         ret = self.exec("select * from %s_lists" % user)
         for row in ret:
-            print(row)
             id=row[0]
             name=row[1]
             out[id] = {
@@ -367,6 +355,14 @@ class DB(SQConnector):
         ))
         self.conn.commit()
 
+    def get_users(self):
+        ret = self.exec("select * from users")
+        out={}
+        for row in ret:
+            usr = user.User.load(self, row)
+            out[usr.name]=usr
+        return out
+
     def list_rename(self, user, lid, name):
         self.exec("update %s_lists set name='%s' where id=%d" % (user, name, lid))
         self.conn.commit()
@@ -397,39 +393,6 @@ class DB(SQConnector):
     def get_film_by_id(self, user, id):
         return self.find(user, "id=%s" % id)
 
-    def append(self, row):
-        if isinstance(row, (list, tuple)): row=DbRow(self.header, None, array=row)
-        self.data.append(row)
-        id=row.resolve("id")
-        self.ids[id]=row
-        actors=row.resolve("actor")
-        if actors:
-            for actor in actors:
-                actor=actor.lower()
-                if not actor in self.actors: self.actors[actor]=[]
-                self.actors[actor].append(row)
-        directors=row.resolve("director")
-        if directors:
-            for director in directors:
-                director=director.lower()
-                if not director in self.directors: self.directors[director]=[]
-                self.directors[director].append(row)
-        pays=row.resolve("nationality")
-        if pays:
-            for pay in pays:
-                pay=pay.lower()
-                if not pay in self.pays: self.pays[pay]=[]
-                self.pays[pay].append(row)
-        iid=int(id)
-        if iid>self.last_id: self.last_id=iid
-
-    def put(self, expr):
-        array=expr.val(self)
-        self.data.append(DbRow(self.header, self.userdata, array=array))
-        self.needsave=True
-        return True
-
-
     def set(self, user, affs, id):
         out="update %s set " % user
         i=0
@@ -438,7 +401,7 @@ class DB(SQConnector):
             out+=x+"="
             out+=sqvalue(affs[x])
             i+=1
-        self.conn.execute(out + " where id=%d" % id)
+        self.conn.execute(out + " where filmid=%d" % id)
         self.conn.commit()
 
 
@@ -454,25 +417,6 @@ class DB(SQConnector):
 
     def __len__(self):
         return len(self.data)
-
-
-
-    @staticmethod
-    def fromjson(js, userdata):
-        if isinstance(js, str):
-            with open(js, "r") as f:
-                js=json.loads(f.read())
-        db=DB(None, userdata=userdata)
-        db.time=js["time"]
-        db.header=DbHeader(db, userdata, array=js["columns"])
-        db.order=js["order"]
-        for row in js["data"]:
-            db.append(DbRow(db.header, userdata=userdata,  array=row))
-
-        return db
-
-    def addfromhtml(self, content):
-        self.data.append(DbRow(self.header, userdata=self.userdata, array=alloimport.extract(content, DB.COLUMNS)))
 
     def tojson(self):
         rows=[]
@@ -499,49 +443,3 @@ class DB(SQConnector):
                 self.append(alloimport.extract(f.read(), DB.COLUMNS))
             n+=1
 
-def printreq(adb, req):
-    res=adb.execute(req)
-    print(res)
-
-def ____():
-    t=time.time()
-    #adb = AlloDB("result.csv")
-
-    usr = user.User.createuser("Test")
-    adb = DB.fromjson("db.json", usr)
-    t=time.time()-t
-    print(t, "s \n")
-
-    #printreq(adb, 'set ownnote=2.5 where id=224')
-    """
-    select='put [1000224,' \
-    '"Les Larmes amères de Petra von Kant",' \
-    '"http://fr.web.img5.acsta.net/pictures/18/04/13/17/04/2768861.jpg",' \
-    '["de"],1972,["Drame"],' \
-    '"Une femme de la grande bourgeoisie, creatrice de mode, vit une passion douloureuse avec une jeune femme de condition plus modeste, Karin, qui reve de devenir mannequin.",' \
-    '["Rainer Werner Fassbinder"],' \
-    '["Margit Carstensen", "Hanna Schygulla", "Irm Hermann", "Eva Mattes"],' \
-    '["Rainer Werner Fassbinder"],["Giuseppe Verdi"],3.8,97,19, 0,1,2,3];id=1000224'
-    """
-
-    #printreq(adb, 'count(select id where id in range(1,100))')
-    #printreq(adb, 'rand(select id where "ken loach" in director, 5)')
-    print(adb.bons_film(10, (2010,2020), ("policier", "thriller")))
-    #print(adb.list_array_field_value("genre", ))
-    while True:
-        sys.stdout.write("$ ")
-        sys.stdout.flush()
-        x=sys.stdin.readline()
-        try:
-            res=adb.execute(x)
-            print(res)
-        except:
-            traceback.print_exc()
-
-def createdb():
-    db=DB(None)
-    db.extract_html_dir("/home/fanch/allocine/allocine/")
-    db.save("db.json")
-
-if __name__=="__main__":
-    createdb()
