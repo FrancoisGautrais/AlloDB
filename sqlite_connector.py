@@ -19,6 +19,7 @@ def _int(x):
     return -1
 
 
+
 FCTS = [
     _int,
     str,
@@ -36,7 +37,22 @@ FCTS = [
     _int,
     _int
 ]
+def _str(x):
+    return str(x).replace("'", "\\'")
 
+def jsdef(js, key, defaut="", fct=_str):
+    if isinstance(js, (tuple, list)):
+        if js[key]==None:
+            if not fct: return defaut
+            return fct(defaut)
+        if not fct : return js[key]
+        return fct(js[key])
+    else:
+        if key in js:
+            if not fct: return js[key]
+            return fct(js[key])
+        if not fct: return defaut
+        return fct(defaut)
 
 def format_row(row):
     out = []
@@ -68,6 +84,23 @@ def sqvalue(x):
     raise Exception("Erreur type non compatible")
 
 class SQConnector:
+    FILM_SCHEM="""create table films (
+	id int primary key,
+    name text,
+    image text,
+    nationality text,
+    year int,
+    duration int,
+    genre text,
+    description text,
+    director text,
+    actor text,
+    creator text,
+    musicBy text,
+    note real,
+    nnote int,
+    nreview int)
+"""
     def __init__(self, file):
         self.conn=sqlite3.connect(file)
         self.conn.execute("PRAGMA case_sensitive_like = false;")
@@ -101,26 +134,108 @@ class SQConnector:
         rs.set_results(cur)
         return rs
 
+    def insert_film_base(self, js):
+        if isinstance(js, (tuple, list)):
+            row=format_row(js)
+            self.exec(
+            "insert into films (id,name,image,nationality,year,duration,genre,description,director,actor,creator,musicBy,note,nnote,nreview) values %s;" % str(
+                row))
+        elif isinstance(js, (dict)):
+            self.exec("""insert into films  (id,name,image,nationality,year,duration,genre,description,director,actor,creator,musicBy,note,nnote,nreview) values (
+                %d, "%s", "%s", "%s", %s, %s, "%s", "%s", "%s", "%s", "%s", "%s", %s, %s, %s           
+            """ % (
+                int(js["id"]),
+                jsdef(js, "name"),
+                jsdef(js, "image"),
+                jsdef(js, "nationality", fct=join),
+                jsdef(js, "year", "NULL"),
+                jsdef(js, "duration", "NULL"),
+                jsdef(js, "genre", fct=join),
+                jsdef(js, "description"),
+                jsdef(js, "director", fct=join),
+                jsdef(js, "actor", fct=join),
+                jsdef(js, "creator", fct=join),
+                jsdef(js, "musicBy", fct=join),
+                jsdef(js, "note", "NULL"),
+                jsdef(js, "nnote", "0"),
+                jsdef(js, "nreview", "0")
+            ))
+        else: raise Exception("insert_film_base: dict, tuple ou list attendu")
+
+    def update_film_base(self, js):
+        if isinstance(js, (tuple, list)):
+            self.exec("""update films set 
+                            name="%s",
+                            image="%s",
+                            nationality="%s",
+                            year=%s,
+                            duration=%s,
+                            genre="%s",
+                            description="%s",
+                            director="%s",
+                            actor="%s",
+                            creator="%s",
+                            musicBy="%s",
+                            note=%s,
+                            nnote=%s,
+                            nreview=%s  where id=%d           
+                        """ % (
+                jsdef(js, 1),
+                jsdef(js, 2),
+                jsdef(js, 3, fct=join),
+                jsdef(js, 4, "NULL"),
+                jsdef(js, 5, "NULL"),
+                jsdef(js, 6, fct=join),
+                jsdef(js, 7),
+                jsdef(js, 8, fct=join),
+                jsdef(js, 9, fct=join),
+                jsdef(js, 10, fct=join),
+                jsdef(js, 11, fct=join),
+                jsdef(js, 12, "NULL"),
+                jsdef(js, 13, "0"),
+                jsdef(js, 14, "0"),
+                int(js[0])
+            ))
+        elif isinstance(js, (dict)):
+            self.exec("""update films set 
+                name='%s',
+                image='%s',
+                nationality='%s',
+                year=%s,
+                duration=%s,
+                genre='%s',
+                description='%s',
+                director='%s',
+                actor='%s',
+                creator='%s',
+                musicBy='%s',
+                note=%s,
+                nnote=%s,
+                nreview=%s  where id=%d           
+            """ % (
+                jsdef(js, "name"),
+                jsdef(js, "image"),
+                jsdef(js, "nationality", fct=join),
+                jsdef(js, "year", "NULL"),
+                jsdef(js, "duration", "NULL"),
+                jsdef(js, "genre", fct=join),
+                jsdef(js, "description"),
+                jsdef(js, "director", fct=join),
+                jsdef(js, "actor", fct=join),
+                jsdef(js, "creator", fct=join),
+                jsdef(js, "musicBy", fct=join),
+                jsdef(js, "note", "NULL"),
+                jsdef(js, "nnote", "0"),
+                jsdef(js, "nreview", "0"),
+                int(js["id"])
+            ))
+        else: raise Exception("update_film_base: dict, tuple ou list attendu")
+
+
     def init_base(self, file):
         with open(file, "r") as f:
             js=json.loads(f.read())
-        self.exec("""create table films (
-	id int primary key,
-    name text,
-    image text,
-    nationality text,
-    year int,
-    duration int,
-    genre text,
-    description text,
-    director text,
-    actor text,
-    creator text,
-    musicBy text,
-    note real,
-    nnote int,
-    nreview int)
-""")
+        self.exec(SQConnector.FILM_SCHEM)
         for row in js["data"]:
             row = format_row(row)
             try:
@@ -136,6 +251,13 @@ class SQConnector:
         self.conn.commit()
 
 
+    def table_exists(self, name):
+        if isinstance(name, (tuple, list)):
+            for x in name:
+                if not self.table_exists(x): return False
+            return True
+        else:
+            return self.one("select count(name) from sqlite_master where type='table' AND name='%s'" % name) >0
 
     def init_user(self, username, file):
         with open(file) as f:
@@ -221,6 +343,9 @@ class SQConnector:
                 )
                 self.conn.execute(query)
             self.conn.commit()
+
+    def commit(self):
+        return self.conn.commit()
 
 def create_datase(output, films, user):
     sql=SQConnector(output)

@@ -131,8 +131,9 @@
     {{/requests_list}}
     <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/import">Importer</a></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/export">Exporter</a></li>
-    <li class="navbar-item"><a class="waves-effect nav-text color-4" onclick="ajaxget('/save')">Sauvegarder</a></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/api/export">Exporter</a></li>
+    <li><div class="divider"></div></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/disconnect">Se déconnecter</a></li>
 </ul>
 
 <div class="card darken-1 modal fond-color-1" id="error">
@@ -223,14 +224,16 @@ function on_head_search(){
             ).find('#replacer').submit();
     }
 }
-
+var autocomplete = null
 function on_autocomplete_up(elem, type){
     var val = elem.val()
     if(val.length>=1){
         $.ajax({
                 type: "GET",
-                url: "/autocomplete/"+type+"/"+val+"/9",
+                url: api("/autocomplete/"+type+"/"+val+"/9"),
                 success: function(data){
+                    autocomplete=data
+                    data=data.data
                     var instance = M.Autocomplete.getInstance(elem)
                     elem[0].autocompletedata=data
                     instance.updateData(

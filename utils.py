@@ -28,6 +28,7 @@ def password(pwd):
     return base64.b64encode(x).decode("ascii")
 
 def check_password(plain, encr):
+
     return password(plain)==encr
 
 def new_key(size):

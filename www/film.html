@@ -96,7 +96,7 @@ main {
     function _change_value(data){
         $.ajax({
             type: "POST",
-            url: "/film/"+FILM_ID+"",
+            url: api("/film/"+FILM_ID+""),
             contentType: "application/json",
             data: JSON.stringify(data),
             success: function(data){ M.toast({html: 'Valeur modifiée'}) },

@@ -1,5 +1,7 @@
 import datetime
 import sys
+import threading
+
 
 def _padding(x, n=2):
     s=str(x)
@@ -23,9 +25,15 @@ class Log:
     def __init__(self, level, fd):
         self.fd=fd
         self.lvl=level
+        self.lock=threading.Lock()
 
     def _log(self, lvl, s):
-        if lvl>=self.lvl: self.fd.write(_time_str()+"|"+Log.LEVEL_STR[lvl]+"| "+s+"\n")
+        if lvl>=self.lvl:
+            self.lock.acquire()
+            self.fd.write(_time_str()+"|"+Log.LEVEL_STR[lvl]+"| "+s+"\n")
+            if self.fd!=sys.stdout:
+                print(_time_str()+"|"+Log.LEVEL_STR[lvl]+"| "+s+"\n")
+            self.lock.release()
 
     def log(self, level, *args):
        arg=[ ]

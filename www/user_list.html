@@ -49,7 +49,6 @@ main {
 
     <script type="text/javascript" src="/js/jquery.min.js"></script>
     <script type="text/javascript" src="/js/materialize.min.js"></script>
-    <script type="text/javascript" src="/js/index.js"></script>
     <script type="text/javascript" src="/js/init.js"></script>
     <#include("www/gen/header.html")>
 
@@ -107,7 +106,7 @@ function new_list()
     var name = obj.val()
     $.ajax({
             type: 'get',
-            url: "/list/create/"+name,
+            url: api("/list/create/"+name),
             success : function(js){
                 list_root()
                  M.toast({html: 'Liste "'+name+'" crée'})
@@ -122,7 +121,7 @@ function confirmDelete(n){
    modalClose("ask_delete")
    $.ajax({
             type: 'get',
-            url: "/list/"+n+"/remove",
+            url: api("/list/"+n+"/remove"),
             success : function(js){
                 modalClose("ask_delete")
                 list_root()
@@ -148,8 +147,9 @@ var test=null
 function list_root(){
     $.ajax({
             type: 'get',
-            url: "/list",
+            url: api("/list"),
             success: function(jsonData){
+                jsonData=jsonData.data
                 var obj = $("#list_root")
                 obj.empty()
                 for(var key in jsonData){

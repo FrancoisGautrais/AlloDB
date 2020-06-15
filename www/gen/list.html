@@ -73,7 +73,7 @@ function new_list()
     var name = obj.val()
     $.ajax({
             type: 'get',
-            url: "/list/create/"+name,
+            url: api("/list/create/"+name),
             success : function(js){
                 list_root(_currentFilmId)
                  M.toast({html: 'Liste "'+name+'" crée'})
@@ -88,7 +88,7 @@ function confirmDelete(n){
    modalClose("ask_delete")
    $.ajax({
             type: 'get',
-            url: "/list/"+n+"/remove",
+            url: api("/list/"+n+"/remove"),
             success : function(js){
                 modalClose("ask_delete")
                 list_root(_currentFilmId)
@@ -101,7 +101,7 @@ function confirmDelete(n){
 function moveUp(id){
     $.ajax({
             type: 'get',
-            url: "/list/{{list-id}}/up/"+id,
+            url: api("/list/{{list-id}}/up/"+id),
             success : function(js){
                 list_root(_currentFilmId)
                  var elem = $("#ul-"+id)
@@ -114,7 +114,7 @@ function moveUp(id){
 function moveDown(id){
     $.ajax({
             type: 'get',
-            url: "/list/{{list-id}}/up/"+id,
+            url: api("/list/{{list-id}}/up/"+id),
             success : function(js){
                 list_root(_currentFilmId)
                  var elem = $("#ul-"+id)
@@ -128,7 +128,7 @@ function moveDown(id){
 function addTolist(id){
     $.ajax({
             type: 'get',
-            url: "/list/"+id+"/add/"+_currentFilmId,
+            url: api("/list/"+id+"/add/"+_currentFilmId),
             success: function(jsonData){
                 list_root(_currentFilmId)
                  M.toast({html: 'Film ajouté'})
@@ -141,7 +141,7 @@ function removeFromlist(id, filmId){
     if(filmId==undefined) filmId=_currentFilmId
     $.ajax({
             type: 'get',
-            url: "/list/"+id+"/remove/"+filmId,
+            url: api("/list/"+id+"/remove/"+filmId),
             success: function(jsonData){
                 list_root(_currentFilmId)
                  M.toast({html: 'Film enlevé'})
@@ -169,7 +169,7 @@ function list_root(fid){
     _currentFilmId=fid
     $.ajax({
             type: 'get',
-            url: "/list",
+            url: api("/list"),
             success: function(jsonData){
                 var obj = $("#list_root")
                 obj.empty()

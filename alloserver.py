@@ -112,6 +112,8 @@ class Request:
         self.time=time.time()
 
 
+API_ROOT = "/api"
+
 class AlloServer(RESTServer):
     RESULT_PER_PAGE=10
 
@@ -120,12 +122,6 @@ class AlloServer(RESTServer):
         "tosee"  : ("select * where tosee = True and seen != True order by note desc", "A voir"),
         "seen"  : ("select * where seen = True order by note desc", "Vus")
     }
-
-    def serve(self, req, res, file):
-        currentuser=self.get_user(req, res, False)
-        if not currentuser: return
-        res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
-
 
 
     def __init__(self, file):
@@ -138,44 +134,46 @@ class AlloServer(RESTServer):
         self.route("GET", "/userlist", lambda req, res: self.serve(req, res, "user_list.html"))
         self.route("GET", "/request", lambda req, res: self.serve(req, res, "request.html"))
         self.route("GET", "/login",  lambda req, res: res.serve_file_gen(config.www("login.html")))
-        self.route("POST", "/login",  self.handle_post_login)
+        self.route("POST", "/login",  self.html_handle_post_login)
         self.route("GET", "/import", lambda req, res: self.serve(req, res, "import.html"))
+        self.route("POST", "/import", self.html_handle_import)
+        self.route("GET", "/film/#id", self.html_handle_film)
+        self.route("GET", "/director/#id", self.html_handle_director)
+        self.route("GET", "/actor/#id", self.html_handle_actor)
+        self.route("GET", "/results/#id/#page", self.html_handle_results)
+        self.route("POST", "/results", self.html_handle_results)
+        self.route("GET", "/showlist/#id", self.html_handle_show_list)
+        self.route("GET", "/showlist/#id/#page", self.html_handle_show_list)
+        self.route("GET", "/searchfilm/#id", self.html_handle_search_film)
+        self.route("GET", "/short/#id", self.html_handle_short)
+        self.route("GET", "/request/#name/run", self.html_handle_run_request)
+        self.route("GET", "/request/#name" , self.html_handle_get_request)
+        self.route("GET", "/disconnect" , self.html_handle_disconnect)
 
-        self.route("POST", "/import", self.handle_import)
-        self.route("GET", "/export", self.handle_export)
-        self.route("GET", "/director/#id", self.handle_director)
-        self.route("GET", "/actor/#id", self.handle_actor)
-        self.route("GET", "/film/#id", self.handle_film)
-        self.route("POST", "/film/#id", self.handle_film_modify)
-        self.route("GET", "/results/#id/#page", self.handle_results)
-        self.route("GET", "/results/#id/export/#format/#filename", self.handle_results_export)
-        self.route("POST", "/results", self.handle_results)
+        self.route("POST", "%s/import" % API_ROOT, self.api_handle_import)
+        self.route("GET", "%s/export" % API_ROOT, self.api_handle_export)
+        self.route("GET", "%s/results/#id/export/#format/#filename" % API_ROOT, self.api_handle_results_export)
+
+        self.route("POST", "%s/film/#id" % API_ROOT, self.api_handle_film_modify)
+        self.route("GET", "%s/film/#id" % API_ROOT, self.api_handle_film_get)
+
+        self.route("DELETE", "%s/request/#name" % API_ROOT, self.api_handle_delete_request)
+        self.route("POST", "%s/request/#name" % API_ROOT, self.api_handle_create_request)
+        self.route("POST", "%s/request" % API_ROOT, self.api_handle_request)
+
+        self.route("GET", "%s/autocomplete/#type/#match" % API_ROOT, self.api_handle_autocomplete)
+        self.route("GET", "%s/autocomplete/#type/#match/#max" % API_ROOT, self.api_handle_autocomplete)
 
 
-        self.route("GET", "/showlist/#id", self.handle_show_list)
-        self.route("GET", "/showlist/#id/#page", self.handle_show_list)
-
-        self.route("GET", "/short/#id", self.handle_short)
-
-        self.route("GET", "/request/#name", self.handle_get_request)
-        self.route("GET", "/request/#name/run", self.handle_run_request)
-        self.route("POST", "/request/#name", self.handle_create_request)
-        self.route("DELETE", "/request/#name", self.handle_delete_request)
-
-        self.route("GET", "/autocomplete/#type/#match", self.handle_autocomplete)
-        self.route("GET", "/autocomplete/#type/#match/#max", self.handle_autocomplete)
-
-        self.route("GET", "/searchfilm/#id", self.handle_search_film)
-
-        self.route("GET", "/list", self.handle_list_all)
-        self.route("GET", "/list/create/#name", self.handle_list_create)
-        self.route("GET", "/list/#idl", self.handle_list_get)
-        self.route("GET", "/list/#idl/remove", self.handle_list_remove)
-        self.route("GET", "/list/#idl/rename/#name", self.handle_list_rename)
-        self.route("GET", "/list/#idl/add/#idfilm", self.handle_list_add)
-        self.route("GET", "/list/#idl/up/#idfilm", self.handle_list_up)
-        self.route("GET", "/list/#idl/down/#idfilm", self.handle_list_down)
-        self.route("GET", "/list/#idl/remove/#idfilm", self.handle_list_remove_item)
+        self.route("GET", "%s/list" % API_ROOT, self.api_handle_list_all)
+        self.route("GET", "%s/list/create/#name" % API_ROOT, self.api_handle_list_create)
+        self.route("GET", "%s/list/#idl" % API_ROOT, self.api_handle_list_get)
+        self.route("GET", "%s/list/#idl/remove" % API_ROOT, self.api_handle_list_remove)
+        self.route("GET", "%s/list/#idl/rename/#name" % API_ROOT, self.api_handle_list_rename)
+        self.route("GET", "%s/list/#idl/add/#idfilm" % API_ROOT, self.api_handle_list_add)
+        self.route("GET", "%s/list/#idl/up/#idfilm" % API_ROOT, self.api_handle_list_up)
+        self.route("GET", "%s/list/#idl/down/#idfilm" % API_ROOT, self.api_handle_list_down)
+        self.route("GET", "%s/list/#idl/remove/#idfilm" % API_ROOT, self.api_handle_list_remove_item)
 
 
         self.route("GET", "/stop", self.handle_stop)
@@ -184,6 +182,32 @@ class AlloServer(RESTServer):
 
         self.static("/", config.WWW_DIR)
 
+
+    #
+    #  ==== Utils methods
+    #
+    def api_resp(self, res : HTTPResponse, httpcode, code, msg, data=None):
+        res.serv(httpcode, {"Content-Type", "application/json"}, {
+            "code" : code,
+            "message" : msg,
+            "data" : data
+        })
+
+
+    def api_resp_ok(self, res : HTTPResponse, data=None):
+        res.serv(200, {"Content-Type" : "application/json"}, {
+            "code" : 0,
+            "message" : "Success",
+            "data" : data
+        })
+
+    def serve(self, req, res, file):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
+
+
+
     def set_new_session(self, user):
         """for key in list(self.sessions.keys()):
             if self.sessions[key]==self.users[user]:
@@ -191,181 +215,6 @@ class AlloServer(RESTServer):
         cookie=new_key(4)
         self.sessions[cookie]=self.users[user]
         return cookie
-
-    def get_user(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
-        log.error("get_user(%s)" % str(tuple(req.cookies.keys())))
-        if "SID" in req.cookies:
-            cookie=req.cookies["SID"]
-            if cookie in self.sessions:
-                log.error("Authentification OK")
-                return self.sessions[cookie]
-            log.error("Authentification FAIL '%s' not in (%s)" % (cookie, str(tuple(self.sessions.keys()))))
-        else:
-            log.error("Authentification FAIL pas de SID")
-        if isjson:
-            res.content_type("application/json")
-            res.serveJson({ "message" : "Erreur, session invalide", "code": 401}, 401)
-        else:
-            res.serve301("/login")
-        return None
-
-    def handle_nop(self, req: HTTPRequest, res: HTTPResponse):
-        self.stop()
-        pass
-
-    def handle_stop(self, req: HTTPRequest, res: HTTPResponse):
-        self.stop()
-        requests.get("http://localhost:%d/nop" % self._port)
-
-    def handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id=req.params["id"]
-        if str(id) in self.db.ids:
-            row=self.db.ids[str(id)]
-            year=row.resolve("year")
-            if not year or year<=1900: year=None
-            title=row.resolve("name")
-            res.end(filmfinder.find_film(title, year), "application/json")
-        else: res.serve404()
-
-    def handle_post_login(self, req: HTTPRequest, res: HTTPResponse):
-        js=req.body_json()
-        user=js["login"]
-        password=js["password"]
-        res.content_type("application/json")
-        if user in self.users:
-            if utils.check_password(password, self.users[user].password):
-                cookie = self.set_new_session(user)
-                res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
-                res.end({})
-                return
-        res.serve401(data={"message" : "Login ou mot de passe invalide"})
-
-
-    def handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        x=self.db.list_get(currentuser.name)
-        res.end(x, "application/json")
-
-    def handle_list_create(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        name=req.params["name"]
-        l=AlloList(name=name)
-        self.db.list_create("fanch", currentuser.name)
-
-    def handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id=req.params["idl"]
-        x=self.db.get_list_by_id(currentuser.name, id)
-        if x:
-            res.end(x.moustache(), "application/json")
-            raise Exception("ICI")
-        else:
-            res.serve404()
-
-    def handle_list_remove(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id = req.params["idl"]
-        self.db.list_remove(currentuser.name, id)
-
-    def handle_list_add(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id = req.params["idl"]
-        idfilm = req.params["idfilm"]
-        self.db.list_add_item(currentuser.name, int(idfilm), id)
-
-
-    def handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
-        pass
-
-    def handle_list_down(self, req: HTTPRequest, res: HTTPResponse):
-        pass
-
-    def handle_list_rename(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id = req.params["idl"]
-        name = req.params["name"]
-        self.db.list_rename(currentuser.name, id, name)
-
-    def handle_list_remove_item(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id = req.params["idl"]
-        idfilm = int(req.params["idfilm"])
-        self.db.list_remove_item(currentuser.name, id, idfilm)
-
-    def _check_query(self, req, query):
-        if "type" in req.query:
-            type=req.query["type"]
-            order=req.query["order"] if "order" in req.query else ""
-            query.sort(type, order!="desc")
-        if "pagesize" in req.query:
-            query.pagesize=int(req.query["pagesize"])
-            query.page=0
-
-    def handle_export(self, req: HTTPRequest, res: HTTPResponse):
-        pass
-
-    def handle_director(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res, False)
-        if not currentuser: return
-        id=req.params["id"].replace("+", " ")
-        if not id in self.db.directors: return res.serve404()
-        path = config.www("results.html")
-        tmp = Request(self.db.row_from_director(id))
-        x = tmp.result
-        x.pagesize = AlloServer.RESULT_PER_PAGE
-        currentuser.request = tmp
-        self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : id})))
-
-    def handle_import(self, req: HTTPRequest, res: HTTPResponse):
-        f=req.multipart_next_file()
-        #f.save(config.user("fanch"), forcePath=True)
-        x=f.parse_content()
-        pass
-
-    def handle_actor(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res, False)
-        if not currentuser: return
-        id=req.params["id"].replace("+", " ")
-        if not id in self.db.actors: return res.serve404()
-        path = config.www("results.html")
-        tmp = Request(self.db.row_from_actor(id))
-        x = tmp.result
-        x.pagesize = AlloServer.RESULT_PER_PAGE
-        currentuser.request=tmp
-        self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, { "name" : id})))
-
-
-    def handle_film(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id=req.params["id"]
-
-        path = config.www("film.html")
-        tmp = Request(self.db.get_film_by_id(currentuser.name,id))
-        x = tmp.result
-        x.pagesize = AlloServer.RESULT_PER_PAGE
-        currentuser.request = tmp
-        self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
-
-    def handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
-        currentuser=self.get_user(req, res)
-        if not currentuser: return
-        id=int(req.params["id"])
-        js = req.body_json()
-        if not js: return res.serve400()
-        self.db.set(currentuser.name, js, id)
 
     def userlist_object(self, name, *args):
         x=self.db.list_get(name)
@@ -380,7 +229,114 @@ class AlloServer(RESTServer):
                             "requests" : xr,
                             "requests_list" : lr}, *args)
 
-    def handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
+
+    def _check_query(self, req, query):
+        if "type" in req.query:
+            type=req.query["type"]
+            order=req.query["order"] if "order" in req.query else ""
+            query.sort(type, order!="desc")
+        if "pagesize" in req.query:
+            query.pagesize=int(req.query["pagesize"])
+            query.page=0
+
+    def get_user(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
+        log.error("get_user(%s)" % str(tuple(req.cookies.keys())))
+        if "SID" in req.cookies:
+            cookie=req.cookies["SID"]
+            if cookie in self.sessions:
+                log.error("Authentification OK")
+                return self.sessions[cookie]
+            log.error("Authentification FAIL '%s' not in (%s)" % (cookie, str(tuple(self.sessions.keys()))))
+        else:
+            log.error("Authentification FAIL pas de SID")
+
+        if isjson:
+            res.content_type("application/json")
+            res.serveJson({ "message" : "Erreur, session invalide", "code": 401}, 401)
+        else:
+            res.serve302("/login")
+        return None
+
+    def handle_nop(self, req: HTTPRequest, res: HTTPResponse):
+        self.stop()
+        pass
+
+    def handle_stop(self, req: HTTPRequest, res: HTTPResponse):
+        self.stop()
+        requests.get("http://localhost:%d/nop" % self._port)
+
+
+    #
+    #  ==== HTML Handlers
+    #
+
+
+    def html_handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        id=req.params["id"]
+        if str(id) in self.db.ids:
+            row=self.db.ids[str(id)]
+            year=row.resolve("year")
+            if not year or year<=1900: year=None
+            title=row.resolve("name")
+            res.end(filmfinder.find_film(title, year), "application/json")
+        else: res.serve404()
+
+
+    def html_handle_run_request(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        path = config.www("results.html")
+        name = req.params["name"]
+        #args = self.db.userdata.requests[name]["values"]
+        args = self.db.request_get(currentuser.name, name)
+        request = json_to_request(args)
+        tmp = Request(self.db.find(currentuser.name, request))
+        x = tmp.result
+        x.pagesize = args["nperpage"] if "nperpage" in args else 20
+        currentuser.request = tmp
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+
+    def html_handle_director(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        id=req.params["id"].replace("+", " ")
+        path = config.www("results.html")
+        tmp = Request(self.db.find(currentuser.name, "director like '%%%s%%'" % id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        currentuser.request = tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : id})))
+
+
+    def html_handle_post_login(self, req: HTTPRequest, res: HTTPResponse):
+        js=req.body_json()
+        user=js["login"]
+        password=js["password"]
+        res.content_type("application/json")
+        if user in self.users:
+            if utils.check_password(password, self.users[user].password):
+                cookie = self.set_new_session(user)
+                res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
+                res.end({})
+                return
+        res.serve401(data={"message" : "Login ou mot de passe invalide"})
+
+    def html_handle_actor(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        id=req.params["id"].replace("+", " ")
+        path = config.www("results.html")
+        tmp = Request(self.db.find(currentuser.name,"actor like '%%%s%%'" % id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        currentuser.request=tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, { "name" : id})))
+
+    def html_handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         path = config.www("results.html")
@@ -399,7 +355,7 @@ class AlloServer(RESTServer):
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
 
-    def handle_short(self, req : HTTPRequest, res : HTTPResponse):
+    def html_handle_short(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         path = config.www("results.html")
@@ -410,33 +366,23 @@ class AlloServer(RESTServer):
         currentuser.request = tmp
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : short[1]})))
 
-    def handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
-        type = req.params["type"]
-        match = req.params["match"]
-        max = int(req.params["max"]) if "max" in req.params else -1
-        res.serveJson(self.db.autocomplete(match,type, max))
 
 
-    def handle_results_export(self, req : HTTPRequest, res : HTTPResponse):
+    def html_handle_film(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
-        if "id" in req.params:
-            x = currentuser.request.result
-            data=""
-            format=req.params["format"]
-            filename=req.params["filename"]
-            if format == "csv" :
-                data=str(x)
-                res.header("Content-Type", "text/csv")
-            elif format == "json" :
-                data=x.moustache()
-                res.header("Content-Type", "application/json")
-            res.header("Content-Disposition", "attachment; filename=\"%s\"" % filename)
-            res.end(data)
-        else:
-            return res.serve400()
+        id=req.params["id"]
 
-    def handle_results(self, req : HTTPRequest, res : HTTPResponse):
+        path = config.www("film.html")
+        tmp = Request(self.db.get_film_by_id(currentuser.name,id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        currentuser.request = tmp
+        self._check_query(req, x)
+        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+
+
+    def html_handle_results(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         path = config.www("results.html")
@@ -465,36 +411,305 @@ class AlloServer(RESTServer):
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
-    def handle_get_request(self, req: HTTPRequest, res: HTTPResponse):
+
+    def html_handle_get_request(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         res.serve_file_gen(config.www("index.html"), self.userlist_object(currentuser.name,{
             "run" : req.params["name"]
         }))
 
-    def handle_run_request(self, req: HTTPRequest, res: HTTPResponse):
+    def html_handle_disconnect(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
-        path = config.www("results.html")
-        name = req.params["name"]
-        #args = self.db.userdata.requests[name]["values"]
-        args = self.db.request_get(currentuser.name, name)
-        request = json_to_request(args)
-        tmp = Request(self.db.find(currentuser.name, request))
-        x = tmp.result
-        x.pagesize = args["nperpage"] if "nperpage" in args else 20
-        currentuser.request = tmp
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+        del self.sessions[req.cookies["SID"]]
+        res.serve302("/login")
 
-    def handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
+
+    def html_handle_import(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        f=req.multipart_next_file()
+        x=json.loads(f.parse_content().decode("ascii"))
+        currentuser.replace_from_js(x)
+        res.serve302("/")
+
+    #
+    #  ==== API Handlers
+    #
+
+    def api_handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list) : renvoie toutes les liste de l'utilisateur
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        x=self.db.list_get(currentuser.name)
+        self.api_resp_ok(res, x)
+
+    def api_handle_list_create(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list/#name) : Crée une nouvelle list #create
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        name=req.params["name"]
+        l=AlloList(name=name)
+        self.db.list_create("fanch", currentuser.name)
+        self.api_resp_ok(res)
+
+    def api_handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list/#idl) : Renvoie la liste avec l'ID #idl sous format json
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id=req.params["idl"]
+        x=self.db.get_list_by_id(currentuser.name, id)
+        if x:
+            res.end(x.moustache(), "application/json")
+            raise Exception("ICI")
+        else:
+            res.serve404()
+        self.api_resp_ok(res)
+
+    def api_handle_list_remove(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list/#idl/remove) : Supprime la liste avec l'ID #idl
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id = req.params["idl"]
+        self.db.list_remove(currentuser.name, id)
+        self.api_resp_ok(res)
+
+    def api_handle_list_add(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list/#idl/add/#idfilm) : Ajoute le film par son identifiant (#idfilm) à la liste #idl
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id = req.params["idl"]
+        idfilm = req.params["idfilm"]
+        self.db.list_add_item(currentuser.name, int(idfilm), id)
+        self.api_resp_ok(res)
+
+
+    def api_handle_list_up(self, req: HTTPRequest, res: HTTPResponse):
+        pass
+
+    def api_handle_list_down(self, req: HTTPRequest, res: HTTPResponse):
+        pass
+
+    def api_handle_list_rename(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/list/#idl/rename/#name) : Change le nom de la liste #idl par #name
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id = req.params["idl"]
+        name = req.params["name"]
+        self.db.list_rename(currentuser.name, id, name)
+        self.api_resp_ok(res)
+
+    def api_handle_list_remove_item(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (/api/) :
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id = req.params["idl"]
+        idfilm = int(req.params["idfilm"])
+        self.db.list_remove_item(currentuser.name, id, idfilm)
+        self.api_resp_ok(res)
+
+
+
+    def api_handle_export(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        payload=currentuser.export()
+        res.serve_file_data(payload, "application/json", currentuser.name+".json", forceDownload=True)
+
+
+    def api_handle_import(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        f=req.multipart_next_file()
+        x=json.loads(f.parse_content().decode("ascii"))
+        usr=currentuser.replace_from_js(x)
+        self.api_resp_ok(res)
+
+
+    def api_handle_film_modify(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/film/#id) : Modifie le film #id (id allocine) avec le contenu du parametre post.
+        Le parametre post est un objet ou les clés correspondent aux colonnes sql et les valeurs de l'objet seront
+        modifiées dans la base
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        id=int(req.params["id"])
+        js = req.body_json()
+        if not js: return res.serve400()
+        self.db.set(currentuser.name, js, id)
+        self.api_resp_ok(res)
+
+
+
+    def api_handle_autocomplete(self, req : HTTPRequest, res : HTTPResponse):
+        """
+        Méthode API (GET /api/autocomplete/#type/#match[/#max]) :
+            Renvoie une liste (tronqué à la taille maximum #max si passé) qui correspondent aux résultat
+            #match sur la recherche de la colonne #type
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        type = req.params["type"]
+        match = req.params["match"]
+        max = int(req.params["max"]) if "max" in req.params else -1
+        self.api_resp_ok(res,self.db.autocomplete(match,type, max))
+
+
+    def api_handle_results_export(self, req : HTTPRequest, res : HTTPResponse):
+        """
+        Méthode API (/api/) :
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res, False)
+        if not currentuser: return
+        if "id" in req.params:
+            x = currentuser.request.result
+            data=""
+            format=req.params["format"]
+            filename=req.params["filename"]
+            if format == "csv" :
+                data=str(x)
+                res.header("Content-Type", "text/csv")
+            elif format == "json" :
+                data=x.moustache()
+                res.header("Content-Type", "application/json")
+            res.header("Content-Disposition", "attachment; filename=\"%s\"" % filename)
+            res.end(data)
+
+        else:
+            return res.serve400()
+
+
+
+    def api_handle_request(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/request/#format) : Lance une requete #format vaut soit "json" soit "sql"
+            Le le format de la requete si format=json
+            {
+                "fields" : {
+                    "CHAMP1" : "VALEUR1",
+                    "CHAMP2" : "VALEUR2",
+                    ...
+                    "CHAMPn" : "VALEURn"
+                }
+            }
+            ou format=sql
+            {
+                "request" : "REQUETE"
+            }
+            La valeur de "request" corresond juste a une expression boolen (pas de select .. from)
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+
+
+
+
+    def api_handle_film_get(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/film/#id) : Récupère le contenu d'un film à l'id #id
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+
+        id=req.params["id"]
+
+        tmp = Request(self.db.get_film_by_id(currentuser.name,id))
+        x = tmp.result
+        x.pagesize = AlloServer.RESULT_PER_PAGE
+        currentuser.request = tmp
+        self._check_query(req, x)
+        self.api_resp_ok(res, x.moustache())
+
+
+
+
+
+
+    def api_handle_create_request(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/request/#name) : Enregistre une requete au nom de #name.
+            Le contenu de la requete (en POST) est suit ce format:
+            {
+                "name" : "NOM DE LA REQUETE",
+                "fields" : [CHAMPS A AFFICHER],
+                "values" : {
+                    "CHAMP1" : "VALEUR1",
+                    "CHAMP2" : "VALEUR2",
+                    ...
+                    "CHAMPn" : "VALEURn",
+                }
+            }
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
         currentuser=self.get_user(req, res)
         if not currentuser: return
         self.db.request_add(currentuser.name, req.params["name"], req.body_json())
+        self.api_resp_ok(res)
 
-    def handle_delete_request(self, req: HTTPRequest, res: HTTPResponse):
+    def api_handle_delete_request(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (DELETE /api/request/#name) : Supprime la requete #name
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
         currentuser=self.get_user(req, res)
         if not currentuser: return
         self.db.request_remove(currentuser.name, req.params["name"])
+        self.api_resp_ok(res)
+
 
 filecache.init()
 
@@ -525,7 +740,9 @@ from sqlite_connector import create_datase
 create_datase("db/allodb.db", "db.json", "fanch")"""
 
 
-als = AlloServer("db/allodb.db")
+
+
+als = AlloServer("db/test.db")
 if not browser:
     als.listen(port)
 else:
@@ -534,3 +751,8 @@ else:
         als.db.userdata.save()
     else:
         os.system("%s 'http://localhost:%d' " % (browser,port))
+"""
+db = DB.create_from_file("db/test.db", "db.json")
+usr = user.User.import_user_file(db, "user/fanch2.json")
+db.commit()
+"""

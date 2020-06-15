@@ -1,7 +1,7 @@
 from resultset import ResultSet
 import json
 from allolist import AlloListSet
-from sqlite_connector import SQConnector, sqvalue
+from sqlite_connector import SQConnector, sqvalue, format_row
 import os
 import sys
 import utils
@@ -432,6 +432,52 @@ class DB(SQConnector):
         }
 
 
+
+
+    def update(self, js):
+        _db=self.exec("select id from films")
+        db={}
+        users = self.exec("select name from users")
+        for row in _db:
+            db[row[0]]=True
+        updated=0
+        inserted=0
+        for row in js["db"]:
+            idfilm=int(row[0])
+            if idfilm in db:
+                self.update_film_base(row)
+                updated+=1
+            else:
+                self.insert_film_base(row)
+                for ur in users:
+                    self.exec("insert into %s (filmid) values (%d) " % (ur[0], idfilm))
+                inserted+=1
+        return {
+            "updated" : updated,
+            "inserted" : inserted
+        }
+
+
+    @staticmethod
+    def create_from_file(dbname, file):
+        conn=DB(dbname)
+        with open(file, "r") as f:
+            js=json.loads(f.read())
+        conn.exec(SQConnector.FILM_SCHEM)
+        for row in js["data"]:
+            row = format_row(row)
+            try:
+                conn.exec("insert into films (id,name,image,nationality,year,duration,genre,description,director,actor,creator,musicBy,note,nnote,nreview) values %s;" % str(row))
+            except Exception as err:
+                print("Error '%s' : %s" % (row[1], str(err)))
+        conn.exec("""create table users (
+            name text,
+            password text,
+            apikey text,
+            data text
+            ) """)
+        conn.conn.commit()
+        return conn
 
     def extract_html_dir(self, dir):
         n=0

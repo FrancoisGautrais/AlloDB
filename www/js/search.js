@@ -141,7 +141,7 @@ function confirmSaveRequest()
     loading()
     $.ajax({
         type: 'POST',
-        url: '/request/'+name,
+        url: api('/request/'+name),
         data: JSON.stringify(data),
         contentType: "application/json",
         success: function (data) {
@@ -162,7 +162,7 @@ function removeRequest(val)
         function () {
             $.ajax({
                 type: 'DELETE',
-                url: '/request/'+val,
+                url: api('/request/'+val),
                 success: function (data) {
                     M.toast({ html: "Élément supprimé"})
                 },

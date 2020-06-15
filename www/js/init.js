@@ -1,4 +1,7 @@
-
+function api(s){
+    if(s[0]=="/") return "/api"+s
+    else return "/api/"+s
+}
 
 
 var MODALS={}
@@ -60,24 +63,6 @@ function error(title, text)
     modal("error")
 }
 
-function autoreplaceall()
-{
-    $(".autoreplace").each(function(index, el){
-        el=$(el)
-        name="autoreplace_"+el.attr("data-type")
-        ret=window[name](el.attr("data-value"), el)
-        if(Array.isArray(ret))
-        {
-            for(var i = ret.length-1; i>=0; i--){
-                el.after(ret[i])
-            }
-        }
-        else{
-            el.after(ret)
-        }
-        el.remove()
-    })
-}
 
 document.addEventListener('DOMContentLoaded', function() {
     var elems = document.querySelectorAll('.sidenav');
@@ -99,7 +84,6 @@ function ajaxget(url, success=null, error=null){
 }
 
 $(document).ready(function(){
-    autoreplaceall()
 
     $('.modal').modal();
     $('.modal').each(function(i, obj){

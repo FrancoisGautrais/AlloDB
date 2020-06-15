@@ -129,7 +129,7 @@
 function _change_value(id, data){
     $.ajax({
         type: "POST",
-        url: "/film/"+id,
+        url: api("/film/"+id),
         contentType: "application/json",
         data: JSON.stringify(data),
         success: function(data){ M.toast({html: 'Valeur modifiée'}) },
@@ -188,7 +188,7 @@ function on_rename(){
     var name = $("#it-list-name").val()
     $.ajax({
         type: "get",
-        url: "/list/{{list-id}}/rename/"+name,
+        url: api("/list/{{list-id}}/rename/"+name),
         success: function(data){ M.toast({html: 'Valeur modifiée'}) },
         error: function(data, err){ M.toast({html: 'Erreur : '+err}) }
     });
