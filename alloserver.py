@@ -4,7 +4,7 @@ import time
 import sys
 
 import requests
-
+import user
 import filmfinder
 from allolist import AlloList
 import uuid
@@ -275,11 +275,11 @@ class AlloServer(RESTServer):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         id=req.params["id"]
-        if str(id) in self.db.ids:
-            row=self.db.ids[str(id)]
-            year=row.resolve("year")
-            if not year or year<=1900: year=None
-            title=row.resolve("name")
+        row=self.db.find(currentuser.name, "id=%s" % id)
+        if row:
+            row=row.row_at(0)
+            year=row[4]
+            title=row[1]
             res.end(filmfinder.find_film(title, year), "application/json")
         else: res.serve404()
 
@@ -401,6 +401,7 @@ class AlloServer(RESTServer):
             x=tmp.result
             x.pagesize = pagesize
             currentuser.request=tmp
+
         else:
             if "id" in req.params and "page" in req.params:
                 x=currentuser.request.result
@@ -715,6 +716,7 @@ filecache.init()
 
 
 browser=None
+create_user=None
 port=8080
 logfile=sys.stdout
 if len(sys.argv)>2:
@@ -730,6 +732,9 @@ if len(sys.argv)>2:
         if arg=="-l" or arg=="--log":
             logfile=open(sys.argv[i+1], "w")
             i+=1
+        if arg=='-u' or arg=="--user":
+            create_user=sys.argv[i+1]
+            i+=1
         i+=1
 
 
@@ -742,15 +747,25 @@ create_datase("db/allodb.db", "db.json", "fanch")"""
 
 
 
-als = AlloServer("db/test.db")
-if not browser:
-    als.listen(port)
+
+
+if create_user:
+    adb = DB("db/allodb.db")
+    js=None
+    with open(create_user) as f:
+        js=json.loads(f.read())
+    user.User.import_user(adb, js)
+    adb.commit()
 else:
-    if os.fork():
+    als = AlloServer("db/allodb.db")
+    if not browser:
         als.listen(port)
-        als.db.userdata.save()
     else:
-        os.system("%s 'http://localhost:%d' " % (browser,port))
+        if os.fork():
+            als.listen(port)
+            als.db.userdata.save()
+        else:
+            os.system("%s 'http://localhost:%d' " % (browser,port))
 """
 db = DB.create_from_file("db/test.db", "db.json")
 usr = user.User.import_user_file(db, "user/fanch2.json")

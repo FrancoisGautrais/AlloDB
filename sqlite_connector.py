@@ -2,6 +2,8 @@ import os
 import time
 import json
 import sqlite3
+
+import log
 import resultset
 from hashlib import sha3_512
 import base64
@@ -107,7 +109,11 @@ class SQConnector:
 
     def exec(self, sql):
         c=self.conn.cursor()
-        return c.execute(sql).fetchall()
+        try:
+            return c.execute(sql).fetchall()
+        except Exception as err:
+            log.error("Eror sql: %s  (%s)" %(str(err), sql))
+            return None
 
     def onerow(self, sql):
         c = self.conn.cursor()

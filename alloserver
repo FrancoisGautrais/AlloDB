@@ -1,3 +1,4 @@
 #!/bin/bash
+export PYTHONPATH=$PYTHONPATH:/home/fanch/Programmation/libs/python
 cd /home/fanch/Programmation/AlloDB
 python3 alloserver.py -b firefox
