@@ -368,9 +368,12 @@ class DB(SQConnector):
         self.conn.commit()
 
     def request_add(self, user, name, value):
-        self.exec("insert into %s_requests (name, value) values ('%s', '%s')" % (user, name,
-                 json.dumps(value)))
-        self.conn.commit()
+        if self.one("select count(*) from %s_requests where name='%s'" % (user, name))>0:
+            self.request_update(user, name, value)
+        else:
+            self.exec("insert into %s_requests (name, value) values ('%s', '%s')" % (user, name,
+                     json.dumps(value)))
+            self.conn.commit()
 
     def request_update(self, user, name, value):
         self.exec("update %s_requests set value='%s' where name='%s' " % (

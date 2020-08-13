@@ -73,11 +73,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-function url(x){window.location.href=x}
-function ajaxget(url, success=null, error=null){
+function url(_url){ window.location.href=_url}
+function ajaxget(_url, success=null, error=null){
     $.ajax({
         type: "get",
-        url: url,
+        url: _url,
         success: success,
         error: error
     })

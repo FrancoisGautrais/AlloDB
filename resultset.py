@@ -111,6 +111,10 @@ class ResultSet:
         self.columns=tuple(map(lambda x: x[0] , cursor.description))
         self.process_time=time.time()-self.start_time
 
+    def resize(self, n):
+        if n<len(self.data):
+            self.data=self.data[:n]
+
     def sort(self, key, reverse):
         if key=="shuffle":
             random.shuffle(self.data)
@@ -118,6 +122,14 @@ class ResultSet:
             key=self.columns.index(key)
             self.data = sorted(self.data, key=cmp_to_key(lambda a, b: sortkey(a, b, key, 1 if reverse else -1)))
 
+    def rand_select(self, n):
+        out = []
+        if n>len(self.data): n=len(self.data)
+        for i in range(n):
+            x=random.randint(0, len(self.data)-1)
+            out.append(self.data[x])
+            del self.data[x]
+        self.data=out
 
     def moustache(self, base={}):
         arr=[]

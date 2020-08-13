@@ -95,11 +95,12 @@ def json_to_request(x):
 
 
     if "order" in x and "order-sort" in x and x["order"]!=None and x["order-sort"]!=None:
-        base+=" order by "+ x["order"]+" "
-        if x["order-sort"]=="desc": base+="desc "
+        if x["order"]!="shuffle":
+            base+=" order by "+ x["order"]+" "
+            if x["order-sort"]=="desc": base+="desc "
 
-    if "rand" in x and x["rand"]!=None and x["rand"]>0:
-        base="rand("+base+", "+str(x["rand"])+" ) "
+    #if "rand" in x and x["rand"]!=None and x["rand"]>0:
+    #    base="rand("+base+", "+str(x["rand"])+" ) "
 
 
     log.info("Request = ", base)
@@ -204,6 +205,9 @@ class AlloServer(RESTServer):
     def serve(self, req, res, file):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.header("Cache-Control", "no-cache")
+        res.header("Pragma", "no-cache")
+        res.header("Expires", "0")
         res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
 
 
@@ -231,13 +235,32 @@ class AlloServer(RESTServer):
 
 
     def _check_query(self, req, query):
-        if "type" in req.query:
-            type=req.query["type"]
-            order=req.query["order"] if "order" in req.query else ""
-            query.sort(type, order!="desc")
-        if "pagesize" in req.query:
-            query.pagesize=int(req.query["pagesize"])
-            query.page=0
+        #post
+        if req.body and "json" in req.body:
+            jsquery=json.loads(req.body["json"])
+            if "order" in jsquery:
+                type=jsquery["order"]
+                order=""
+                if "order-sort" in jsquery:
+                    order=jsquery["order-sort"]
+                query.sort(type, order!="desc")
+            if "nperpage" in jsquery:
+                query.pagesize = int(jsquery["nperpage"])
+                query.page = 0
+            if "rand" in jsquery:
+                query.rand_select(jsquery["rand"])
+
+
+
+        # get
+        if req.method.lower()=="get":
+            if "type" in req.query:
+                type=req.query["type"]
+                order=req.query["order"] if "order" in req.query else ""
+                query.sort(type, order!="desc")
+            if "pagesize" in req.query:
+                query.pagesize=int(req.query["pagesize"])
+                query.page=0
 
     def get_user(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
         log.error("get_user(%s)" % str(tuple(req.cookies.keys())))
@@ -291,11 +314,13 @@ class AlloServer(RESTServer):
         name = req.params["name"]
         #args = self.db.userdata.requests[name]["values"]
         args = self.db.request_get(currentuser.name, name)
-        request = json_to_request(args)
+        req.body={"json": json.dumps(args["values"])}
+        request = json_to_request(args["values"])
         tmp = Request(self.db.find(currentuser.name, request))
         x = tmp.result
         x.pagesize = args["nperpage"] if "nperpage" in args else 20
         currentuser.request = tmp
+        self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
 
     def html_handle_director(self, req: HTTPRequest, res: HTTPResponse):
@@ -408,6 +433,8 @@ class AlloServer(RESTServer):
                 x.page=int(req.params["page"])-1
             else:
                 return res.serve400()
+
+
 
         self._check_query(req, x)
         res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
