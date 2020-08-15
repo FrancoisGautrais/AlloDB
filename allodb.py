@@ -329,7 +329,7 @@ class DB(SQConnector):
             l = row[1].split(",")
             ll = []
             for x in l:
-                if l != id: ll.append()
+                if x != id: ll.append(x)
             self.exec("update %s set lists='%s' where filmid=%d " % (user, ",".join(ll), fid))
         self.exec("delete from %s_lists where id='%s'" % (user, str(id)))
         self.conn.commit()
@@ -364,7 +364,7 @@ class DB(SQConnector):
         return out
 
     def list_rename(self, user, lid, name):
-        self.exec("update %s_lists set name='%s' where id=%d" % (user, name, lid))
+        self.exec("update %s_lists set name='%s' where id='%s'" % (user, name, lid))
         self.conn.commit()
 
     def request_add(self, user, name, value):

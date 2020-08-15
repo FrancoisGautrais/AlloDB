@@ -489,7 +489,7 @@ class AlloServer(RESTServer):
         if not currentuser: return
         name=req.params["name"]
         l=AlloList(name=name)
-        self.db.list_create("fanch", currentuser.name)
+        self.db.list_create("fanch", name)
         self.api_resp_ok(res)
 
     def api_handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
