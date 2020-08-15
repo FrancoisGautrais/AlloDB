@@ -209,7 +209,7 @@ class AlloServer(RESTServer):
         res.header("Pragma", "no-cache")
         res.header("Expires", "Wed, 11 Jan 1984 05:00:00 GMT")
 
-        res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
+        res.serve_file_gen(config.www(file), self.userlist_object(req, currentuser.name))
 
 
 
@@ -221,7 +221,7 @@ class AlloServer(RESTServer):
         self.sessions[cookie]=self.users[user]
         return cookie
 
-    def userlist_object(self, name, *args):
+    def userlist_object(self, req, name, *args):
         x=self.db.list_get(name)
         l=[]
         for i in x: l.append(i)
@@ -229,7 +229,11 @@ class AlloServer(RESTServer):
         xr = self.db.request_get(name)
         lr=[]
         for i in xr: lr.append(i)
-        return dictassign({ "user_list" : x,
+
+
+        return dictassign({
+                            "mobile" : req.is_mobile(),
+                            "user_list" : x,
                             "user_list_array" : l,
                             "requests" : xr,
                             "requests_list" : lr}, *args)
@@ -326,7 +330,7 @@ class AlloServer(RESTServer):
         x.pagesize = args["nperpage"] if "nperpage" in args else 20
         currentuser.request = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name)))
 
     def html_handle_director(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
@@ -339,7 +343,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         currentuser.request = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : id})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name, {"name" : id})))
 
 
     def html_handle_post_login(self, req: HTTPRequest, res: HTTPResponse):
@@ -368,7 +372,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         currentuser.request=tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, { "name" : id})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name, { "name" : id})))
 
     def html_handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
@@ -387,7 +391,7 @@ class AlloServer(RESTServer):
         x.page=page
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name)))
 
 
     def html_handle_short(self, req : HTTPRequest, res : HTTPResponse):
@@ -400,7 +404,7 @@ class AlloServer(RESTServer):
         x = tmp.result
         x.pagesize = 10
         currentuser.request = tmp
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name, {"name" : short[1]})))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name, {"name" : short[1]})))
 
 
 
@@ -416,7 +420,7 @@ class AlloServer(RESTServer):
         x.pagesize = AlloServer.RESULT_PER_PAGE
         currentuser.request = tmp
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name)))
 
 
     def html_handle_results(self, req : HTTPRequest, res : HTTPResponse):
@@ -450,13 +454,13 @@ class AlloServer(RESTServer):
 
 
         self._check_query(req, x)
-        res.serve_file_gen(path, x.moustache(self.userlist_object(currentuser.name)))
+        res.serve_file_gen(path, x.moustache(self.userlist_object(req, currentuser.name)))
 
 
     def html_handle_get_request(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
-        res.serve_file_gen(config.www("index.html"), self.userlist_object(currentuser.name,{
+        res.serve_file_gen(config.www("index.html"), self.userlist_object(req, currentuser.name,{
             "run" : req.params["name"]
         }))
 

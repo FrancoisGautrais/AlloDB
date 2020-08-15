@@ -65,63 +65,66 @@
 {{/is-list}}
 {{^is-list}}{{#name}}<h1>{{name}}</h1>{{/name}}{{/is-list}}
 <p>{{count}} résultats en {{time}} secondes</p>
-{{#data}}
-<ul class="collection sortable" data-name="{{name}}" id="ul-{{id}}">
+<div class="this">
+    {{#data}}
+    <ul class="collection sortable" data-name="{{name}}" id="ul-{{id}}">
 
-    <li class="collection-item custom-list" >
-        <a href="/film/{{id}}" class="tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">
-            <span class="custom-list-item-icon">
-                <img src="{{image}}" height="170px">
+        <li class="collection-item custom-list" >
+            <a href="/film/{{id}}" class="tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">
+                <span class="custom-list-item-icon">
+                    <img src="{{image}}" height="170px">
+                </span>
+            </a>
+            <span class="custom-list-item second-line">
+                <a href="/film/{{id}}" class="title-filename color-5 tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">{{name}}</a>
+                <i onclick="show_download({{id}})" class="material-icons color-1 download-icon">file_download</i>
+
+                <div class="subtitle-filename color-5">
+                    <p> Sorti en {{year}}, <#minToStr({{duration}})>, {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
+                        De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
+                        {{#genre}}{{.}} &nbsp; &nbsp;  {{/genre}}<br>
+                        Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>  &nbsp; &nbsp;&nbsp;  {{/actor}} <br>
+                        {{note}}/5 (parmi {{nnote}}) {{#lists}}<br>
+                        Listes: <a href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a>{{/lists}}</p>
+                </div>
             </span>
-        </a>
-        <span class="custom-list-item second-line">
-            <a href="/film/{{id}}" class="title-filename color-5 tooltipped" data-position="bottom" data-tooltip="<#escapequote("{{description}}")">">{{name}}</a>
-            <i onclick="show_download({{id}})" class="material-icons color-1 download-icon">file_download</i>
 
-            <div class="subtitle-filename color-5">
-                <p> Sorti en {{year}}, <#minToStr({{duration}})>, {{#nationality}}<#get("payslist", "{{.}}")> &nbsp;  {{/nationality}}<br>
-                    De {{#director}} <a href="/director/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>&nbsp;  {{/director}}<br>
-                    {{#genre}}{{.}} &nbsp; &nbsp;  {{/genre}}<br>
-                    Avec {{#actor}} <a href="/actor/<#lower(replace("{{.}}", " ", "+" ))>">{{.}}</a>  &nbsp; &nbsp;&nbsp;  {{/actor}} <br>
-                    {{note}}/5 (parmi {{nnote}}) {{#lists}}<br>
-                    Listes: <a href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a>{{/lists}}</p>
+            <div class="{{^mobile}}right{{/mobile}}">
+                <div>
+                    <label>
+                        <input type="checkbox" class="inline-cb" id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
+                        <span>Vu</span>
+                    </label>
+                    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                    <label>
+                        <input type="checkbox" class="inline-cb" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
+                        <span>À (re)voir</span>
+                    </label>
+                </div>
+                <div class="input-field">
+                    <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
+                    <label for="t_note_{{id}}">Note / 5</label>
+                </div>
+                <div class="input-field">
+                    <center>
+                        {{#is-list}}
+                        <i class="material-icons icon-action" onclick="removeFromlist('{{list-id}}', {{id}})">remove</i>
+                        <i class="material-icons icon-action" onclick="moveUp({{id}})">arrow_upward</i>
+                        <i class="material-icons icon-action" onclick="moveDown({{id}})">arrow_downward</i>
+                        <i class="material-icons icon-action" onclick="show_list_root({{id}})">add</i>
+                        {{/is-list}}
+                        {{^is-list}}
+                        <a  class="btn fond-color-2" onclick="show_list_root({{id}})">Ajouter à une liste</a>
+                        {{/is-list}}
+                    </center>
+                </div>
             </div>
-        </span>
-        <div class="right">
-            <div>
-                <label>
-                    <input type="checkbox" class="inline-cb" id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
-                    <span>Vu</span>
-                </label>
-                <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                <label>
-                    <input type="checkbox" class="inline-cb" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
-                    <span>À (re)voir</span>
-                </label>
-            </div>
-            <div class="input-field">
-                <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
-                <label for="t_note_{{id}}">Note / 5</label>
-            </div>
-            <div class="input-field">
-                <center>
-                    {{#is-list}}
-                    <i class="material-icons icon-action" onclick="removeFromlist('{{list-id}}', {{id}})">remove</i>
-                    <i class="material-icons icon-action" onclick="moveUp({{id}})">arrow_upward</i>
-                    <i class="material-icons icon-action" onclick="moveDown({{id}})">arrow_downward</i>
-                    <i class="material-icons icon-action" onclick="show_list_root({{id}})">add</i>
-                    {{/is-list}}
-                    {{^is-list}}
-                    <a  class="btn fond-color-2" onclick="show_list_root({{id}})">Ajouter à une liste</a>
-                    {{/is-list}}
-                </center>
-            </div>
-        </div>
-    </li>
-</ul>
 
-<script>var CURRENT_REQUEST_ID='<#get("id")>'</script>
+        </li>
+    </ul>
 {{/data}}
+</div>
+<script>var CURRENT_REQUEST_ID='<#get("id")>'</script>
 
 <#include("www/gen/find_download.html")>
 
