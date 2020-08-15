@@ -135,16 +135,14 @@ class SQConnector:
         query="select * from films, %s where filmid=id and %s " % (user, translate_query(sql))
         if order:
             query+=" ORDER BY %s" % order
-        print("T1 %d " % (int((time.time()-t)*1000)))
         cur=self.conn.cursor()
-        print("T2 %d " % (int((time.time()-t)*1000)))
         rs=resultset.ResultSet(pagesize, page)
-        print("T3 %d " % (int((time.time()-t)*1000)))
-        cur.execute(query)
-        print("T4 %d " % (int((time.time()-t)*1000)))
-
+        try:
+            cur.execute(query)
+        except sqlite3.OperationalError as err:
+            log.e("Error sqlite_connector.find: %s " % str(err))
+            return rs
         rs.set_results(cur)
-        print("T5 %d : %d" % (int((time.time()-t)*1000), len(rs.data)))
         return rs
 
     def insert_film_base(self, js):

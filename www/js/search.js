@@ -103,16 +103,16 @@ $(document).ready(function(){
     updateSelecteAdd();
 
     $("#widget-it-match").autocomplete()
-    $("#widget-it-match").keypress(function(evt) { if(evt.which==13) send_request() })
+    //$("#widget-it-match").keypress(function(evt) { if(evt.which==13) send_request() })
     $("#widget-it-match").keyup(function() { on_autocomplete_up($("#widget-it-match"), "name") })
 
     $("#widget-it-actor").autocomplete()
-    $("#widget-it-actor").keypress(function(evt) { if(evt.which==13) send_request() })
+    //$("#widget-it-actor").keypress(function(evt) { if(evt.which==13) send_request() })
     $("#widget-it-actor").keyup(function() { on_autocomplete_up($("#widget-it-actor"), "actor") })
 
 
     $("#widget-it-director").autocomplete()
-    $("#widget-it-director").keypress(function(evt) { if(evt.which==13) send_request() })
+    //$("#widget-it-director").keypress(function(evt) { if(evt.which==13) send_request() })
     $("#widget-it-director").keyup(function() { on_autocomplete_up($("#widget-it-director"), "director") })
 
     _run()
