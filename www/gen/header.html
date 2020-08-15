@@ -5,6 +5,10 @@
 .title {
     font-size: 24px;
 }
+.title-div {
+    margin-left: 48px;
+}
+
 
 .logo {
 }
@@ -17,6 +21,7 @@
 
 .header {
     margin: 0 ! important;
+    padding-top: 10px;
     height: 48px;
 }
 .header > a {
@@ -81,7 +86,8 @@
     position: absolute;
     right: 5px;
     float: right ! important;
-    width: 25%;
+    width: 66%;
+
 }
 
 .main-search > input {
@@ -89,23 +95,28 @@
 }
 
 .main-search > i {
-    font-size: 40px ! important;
-    top: -4px ! important;
+    font-size: 32px ! important;
+    top: 4px ! important;
+    left: 10px;
+}
+
+.sidenav-icon {
+    top: 11px ! important;
 }
 
 </style>
 
 
 <div class="header fond-color-1">
-    <span data-target="slide-out" class="sidenav-trigger left color-4"><i class="material-icons menu-icon">menu</i></span>
-    <center><a href="/" class="title color-4">Allo DB</a></center>
-    <div class="input-field  main-search">
+    <span data-target="slide-out" class="sidenav-trigger sidenav-icon left color-4"><i class="material-icons menu-icon">menu</i></span>
+    <span class="title-div"><a href="/" class="title color-4">Allo DB</a></span>
+    <span class="input-field  main-search">
         <i class="material-icons prefix color-4">search</i>
         <input class="color-4 navbar-item autocomplete "
                onkeyup="on_autocomplete_up($('#it-head-search'), 'name')"
                type="text" id="it-head-search"/>
         <label for="it-head-search">Recherche</label>
-    </div>
+    </span>
 </div>
 
 <ul id="slide-out" class="sidenav menu-text fond-color-1">
