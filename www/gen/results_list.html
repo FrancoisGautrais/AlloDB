@@ -88,37 +88,38 @@
                         Listes: <a href="/showlist/{{.}}"><#get("user_list", "{{.}}", "name")></a>{{/lists}}</p>
                 </div>
             </span>
-
-            <div class="{{^mobile}}right{{/mobile}}">
-                <div>
-                    <label>
-                        <input type="checkbox" class="inline-cb" id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
-                        <span>Vu</span>
-                    </label>
-                    <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
-                    <label>
-                        <input type="checkbox" class="inline-cb" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
-                        <span>À (re)voir</span>
-                    </label>
+            {{^mobile}}
+                <div class="right">
+                    <div>
+                        <label>
+                            <input type="checkbox" class="inline-cb" id="cb_seen_{{id}}"  data-id="{{id}}" data-value="{{seen}}"/>
+                            <span>Vu</span>
+                        </label>
+                        <span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>
+                        <label>
+                            <input type="checkbox" class="inline-cb" id="cb_to_see_{{id}}"  data-id="{{id}}"  data-value="{{tosee}}"/>
+                            <span>À (re)voir</span>
+                        </label>
+                    </div>
+                    <div class="input-field">
+                        <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
+                        <label for="t_note_{{id}}">Note / 5</label>
+                    </div>
+                    <div class="input-field">
+                        <center>
+                            {{#is-list}}
+                            <i class="material-icons icon-action" onclick="removeFromlist('{{list-id}}', {{id}})">remove</i>
+                            <i class="material-icons icon-action" onclick="moveUp({{id}})">arrow_upward</i>
+                            <i class="material-icons icon-action" onclick="moveDown({{id}})">arrow_downward</i>
+                            <i class="material-icons icon-action" onclick="show_list_root({{id}})">add</i>
+                            {{/is-list}}
+                            {{^is-list}}
+                            <a  class="btn fond-color-2" onclick="show_list_root({{id}})">Ajouter à une liste</a>
+                            {{/is-list}}
+                        </center>
+                    </div>
                 </div>
-                <div class="input-field">
-                    <input id="t_note_{{id}}" type="number" data-id="{{id}}" step="0.1" class="validate"  data-value="{{ownnote}}">
-                    <label for="t_note_{{id}}">Note / 5</label>
-                </div>
-                <div class="input-field">
-                    <center>
-                        {{#is-list}}
-                        <i class="material-icons icon-action" onclick="removeFromlist('{{list-id}}', {{id}})">remove</i>
-                        <i class="material-icons icon-action" onclick="moveUp({{id}})">arrow_upward</i>
-                        <i class="material-icons icon-action" onclick="moveDown({{id}})">arrow_downward</i>
-                        <i class="material-icons icon-action" onclick="show_list_root({{id}})">add</i>
-                        {{/is-list}}
-                        {{^is-list}}
-                        <a  class="btn fond-color-2" onclick="show_list_root({{id}})">Ajouter à une liste</a>
-                        {{/is-list}}
-                    </center>
-                </div>
-            </div>
+            {{/mobile}}
 
         </li>
     </ul>
