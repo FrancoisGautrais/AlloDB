@@ -205,9 +205,10 @@ class AlloServer(RESTServer):
     def serve(self, req, res, file):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
-        res.header("Cache-Control", "no-cache")
+        res.header("Cache-Control", "max-age=0, no-cache, no-store, must-revalidate")
         res.header("Pragma", "no-cache")
-        res.header("Expires", "0")
+        res.header("Expires", "Wed, 11 Jan 1984 05:00:00 GMT")
+
         res.serve_file_gen(config.www(file), self.userlist_object(currentuser.name))
 
 
@@ -289,6 +290,8 @@ class AlloServer(RESTServer):
         requests.get("http://localhost:%d/nop" % self._port)
 
 
+
+
     #
     #  ==== HTML Handlers
     #
@@ -297,6 +300,7 @@ class AlloServer(RESTServer):
     def html_handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         id=req.params["id"]
         row=self.db.find(currentuser.name, "id=%s" % id)
         if row:
@@ -310,6 +314,7 @@ class AlloServer(RESTServer):
     def html_handle_run_request(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         path = config.www("results.html")
         name = req.params["name"]
         #args = self.db.userdata.requests[name]["values"]
@@ -326,6 +331,7 @@ class AlloServer(RESTServer):
     def html_handle_director(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         id=req.params["id"].replace("+", " ")
         path = config.www("results.html")
         tmp = Request(self.db.find(currentuser.name, "director like '%%%s%%'" % id))
@@ -341,17 +347,20 @@ class AlloServer(RESTServer):
         user=js["login"]
         password=js["password"]
         res.content_type("application/json")
+        res.no_cache()
         if user in self.users:
             if utils.check_password(password, self.users[user].password):
                 cookie = self.set_new_session(user)
                 res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
                 res.end({})
                 return
+
         res.serve401(data={"message" : "Login ou mot de passe invalide"})
 
     def html_handle_actor(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         id=req.params["id"].replace("+", " ")
         path = config.www("results.html")
         tmp = Request(self.db.find(currentuser.name,"actor like '%%%s%%'" % id))
@@ -364,6 +373,7 @@ class AlloServer(RESTServer):
     def html_handle_show_list(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         path = config.www("results.html")
         page = 0
         pagesize = AlloServer.RESULT_PER_PAGE
@@ -383,6 +393,7 @@ class AlloServer(RESTServer):
     def html_handle_short(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         path = config.www("results.html")
         short=AlloServer.SHORT_REQUESTS[req.params["id"]]
         tmp = Request(self.db.execute(short[0]))
@@ -396,6 +407,7 @@ class AlloServer(RESTServer):
     def html_handle_film(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         id=req.params["id"]
 
         path = config.www("film.html")
@@ -410,6 +422,7 @@ class AlloServer(RESTServer):
     def html_handle_results(self, req : HTTPRequest, res : HTTPResponse):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
+        res.no_cache()
         path = config.www("results.html")
         request = ""
         pagesize = AlloServer.RESULT_PER_PAGE
@@ -766,7 +779,7 @@ if len(sys.argv)>2:
 
 
 
-Log.init()
+Log.init(fd=logfile)
 """
 from sqlite_connector import create_datase
 create_datase("db/allodb.db", "db.json", "fanch")"""
