@@ -73,6 +73,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+function toast(html) {
+    M.toast({html: html})
+}
+
 function url(_url){ window.location.href=_url}
 function ajaxget(_url, success=null, error=null){
     $.ajax({

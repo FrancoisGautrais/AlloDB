@@ -1,0 +1,95 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Rechercher</title>
+</head>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+
+    <body>
+        <#include("www/gen/header.html")>
+        <main>
+            <div class="container row">
+                <div class="row col  s12 offset-m2 m8">
+                    <center><h1>Mon compte : {{username}}</h1></center>
+                    <h2>Clé API</h2>
+                    <div class="row">
+                        <div class="input-field col s12 m9">
+                          <input disabled value="" id="it-apikey" type="text" class="validate">
+                          <label for="it-apikey"></label>
+                        </div>
+                        <a onclick="renew_api()" class="btn fond-color-1 color-4 col s6 m3">Regénérer</a>
+                    </div>
+                    <h2>Mot de passe</h2>
+                    <div class="row s12">
+                        <#col(input_text("it-password-first", "", "password", "Nouveau mot de passe", 0, "password-first"), "col s12 m6")>
+                        <#col(input_text("it-password-second", "", "password", "Retappez le mot de passe", 0, "password-second"), "col s12 m6")>
+                        <a onclick="change_password()" class="btn fond-color-1 color-4 col">Modifier le mot de passe</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <#include("www/gen/footer.html")>
+    </body>
+    <script>
+        $(document).ready(function(){
+            $.ajax({
+                type: 'get',
+                url: api("/user/key"),
+                success: function(jsonData){
+                    var key = jsonData.data;
+                    $("#it-apikey").val(key)
+                },
+                error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+            });
+        })
+
+        function change_password(){
+            var pwd1 = $("#it-password-first").val()
+            var pwd2 = $("#it-password-second").val()
+            if(pwd1==pwd2){
+                $.ajax({
+                    type: 'post',
+                    url: api("/user/password"),
+                    contentType: "application/json",
+                    data: JSON.stringify({password : pwd1 }),
+                    success: function(jsonData){
+                        modalClose("loading");
+                        M.toast({html: 'Mot de passe modifié'})
+                    },
+                    error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+                });
+            }else{
+                error("Erreur", "Les mots de passes ne sont pas identiques")
+            }
+        }
+
+        function renew_api(){
+            loading("Merci de patienter...")
+            $.ajax({
+                    type: 'get',
+                    url: api("user/key/renew"),
+                    success: function(jsonData){
+                        modalClose("loading");
+                        if(jsonData.code!=0){
+                            error('Erreur : ', jsonData.message+' : '+jsonData.data)
+                        }else{
+                            var key = jsonData.data;
+                            $("#it-apikey").val(key)
+                        }
+                    },
+                    error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+             });
+        }
+    </script>
+    <style>
+
+    </style>
+</html>

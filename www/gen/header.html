@@ -144,6 +144,11 @@
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/import">Importer</a></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/api/export">Exporter</a></li>
     <li><div class="divider"></div></li>
+    <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/options">Mon compte</a></li>
+    {{#admin}}
+        <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/admin">Administration</a></li>
+    {{/admin}}
+    <li><div class="divider"></div></li>
     <li class="navbar-item"><a class="waves-effect nav-text color-4" href="/disconnect">Se déconnecter</a></li>
 </ul>
 
@@ -203,6 +208,9 @@
 
 <script>
 data=<#json(get())>
+var DATA=data
+
+
 function autocomp_to_obj(arr){
     var out={}
     for( var i in arr) out[arr[i]]=null

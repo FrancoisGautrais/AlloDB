@@ -6,10 +6,31 @@ function option(label, value) {
     return $('<li> <a onclick="onSelectCritereChange(\''+value+'\')">'+label+'</a></li>')
 }
 
+function save_default_request()
+{
+    var data = getResults()
+    var name=$("#it-request").val()
+    data["name"]=name
+    loading()
+    $.ajax({
+        type: 'POST',
+        url: api('/user/userdata'),
+        data: JSON.stringify({ "default_search" : data }),
+        contentType: "application/json",
+        success: function (data) {
+            M.toast({html: "Recherche par défaut sauvée"})
+            modalClose("loading")
+        },
+        error: function () {
+            error("Impossible de sauver la requete par défaut")
+        }
+    });
+}
+
 function loadRequest(a)
 {
-
-    a=REQUEST_LIST[a]
+    if( typeof a == "string" )
+        a=REQUEST_LIST[a]
     var fields = a.fields;
     var values =  a.values;
     clearCriteres();
@@ -201,11 +222,14 @@ function add_widget_val(x){
 }
 
 function send_request(){
+    postjson={}
     $("#root-widget").find('[id^=widget-]').each(function(a,b){ add_widget_val($(b)) } )
+    var payload=JSON.stringify(postjson)
+    $('#replacer').remove()
     $('body').append($('<form/>')
       .attr({'action': "/results", 'method': 'post', 'id': 'replacer'})
       .append($('<input/>')
-        .attr({'type': 'hidden', 'name': 'json', 'value': JSON.stringify(postjson)})
+        .attr({'type': 'hidden', 'name': 'json', 'value': payload})
       )
     ).find('#replacer').submit();
 }

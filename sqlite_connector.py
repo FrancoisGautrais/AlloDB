@@ -131,8 +131,23 @@ class SQConnector:
         return rs
 
     def find(self, user, sql, order=None, pagesize=50, page=0):
+        t = time.time()
+        query = "select * from films, %s where filmid=id and %s " % (user, translate_query(sql))
+        if order:
+            query += " ORDER BY %s" % order
+        cur = self.conn.cursor()
+        rs = resultset.ResultSet(pagesize, page)
+        try:
+            cur.execute(query)
+        except sqlite3.OperationalError as err:
+            log.e("Error sqlite_connector.find: %s " % str(err))
+            return rs
+        rs.set_results(cur)
+        return rs
+
+    def find_nouser(self, user, sql, order=None, pagesize=50, page=0):
         t=time.time()
-        query="select * from films, %s where filmid=id and %s " % (user, translate_query(sql))
+        query="select * from films where %s " % (translate_query(sql))
         if order:
             query+=" ORDER BY %s" % order
         cur=self.conn.cursor()
@@ -144,6 +159,8 @@ class SQConnector:
             return rs
         rs.set_results(cur)
         return rs
+
+
 
     def insert_film_base(self, js):
         if isinstance(js, (tuple, list)):

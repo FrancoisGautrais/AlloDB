@@ -76,6 +76,10 @@
                 dataType: "json"
             });
         }
+
+        $(document).ready(function() {
+            $("#password").keypress(function(evt) { if(evt.which==13) onlogin() })
+        });
     </script>
     <#include("www/gen/footer.html")>
 </body>

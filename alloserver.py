@@ -134,6 +134,8 @@ class AlloServer(RESTServer):
         self.route("GET", "/index.html", lambda req, res: self.serve(req, res, "index.html"))
         self.route("GET", "/userlist", lambda req, res: self.serve(req, res, "user_list.html"))
         self.route("GET", "/request", lambda req, res: self.serve(req, res, "request.html"))
+        self.route("GET", "/options", lambda req, res: self.serve(req, res, "options.html"))
+        self.route("GET", "/admin", lambda req, res: self.serve(req, res, "admin.html"))
         self.route("GET", "/login",  lambda req, res: res.serve_file_gen(config.www("login.html")))
         self.route("POST", "/login",  self.html_handle_post_login)
         self.route("GET", "/import", lambda req, res: self.serve(req, res, "import.html"))
@@ -176,6 +178,15 @@ class AlloServer(RESTServer):
         self.route("GET", "%s/list/#idl/down/#idfilm" % API_ROOT, self.api_handle_list_down)
         self.route("GET", "%s/list/#idl/remove/#idfilm" % API_ROOT, self.api_handle_list_remove_item)
 
+        self.route("POST", "%s/user/userdata" % API_ROOT, self.api_handle_set_userdata)
+        self.route("POST", "%s/user/password" % API_ROOT, self.api_handle_password)
+        self.route("GET", "%s/user/key/renew" % API_ROOT, self.api_key_renew)
+        self.route("GET", "%s/user/key" % API_ROOT, self.api_key_get)
+        self.route("GET", "%s/admin/user/#usr/permission" % API_ROOT, self.api_handle_permission)
+        self.route("POST", "%s/admin/user/create" % API_ROOT, self.api_alter_user)
+        self.route("GET", "%s/admin/user/list" % API_ROOT, self.api_user_list)
+        self.route("GET", "%s/admin/user/delete/#usr" % API_ROOT, self.api_user_delete)
+
 
         self.route("GET", "/stop", self.handle_stop)
         self.route("GET", "/nop", self.handle_nop)
@@ -194,11 +205,24 @@ class AlloServer(RESTServer):
             "data" : data
         })
 
+    def api_resp_ok(self, res: HTTPResponse, data=None):
+        res.serv(200, {"Content-Type": "application/json"}, {
+            "code": 0,
+            "message": "Success",
+            "data": data
+        })
 
-    def api_resp_ok(self, res : HTTPResponse, data=None):
-        res.serv(200, {"Content-Type" : "application/json"}, {
-            "code" : 0,
-            "message" : "Success",
+    def api_resp_forbidden(self, res : HTTPResponse, data=None):
+        res.serv(403, {"Content-Type" : "application/json"}, {
+            "code" : 403,
+            "message" : "Forbidden",
+            "data" : data
+        })
+
+    def api_resp_not_found(self, res : HTTPResponse, data=None):
+        res.serv(404, {"Content-Type" : "application/json"}, {
+            "code" : 404,
+            "message" : "Ressource not found",
             "data" : data
         })
 
@@ -222,6 +246,7 @@ class AlloServer(RESTServer):
         return cookie
 
     def userlist_object(self, req, name, *args):
+        usr = self.users[name]
         x=self.db.list_get(name)
         l=[]
         for i in x: l.append(i)
@@ -230,13 +255,15 @@ class AlloServer(RESTServer):
         lr=[]
         for i in xr: lr.append(i)
 
-
         return dictassign({
                             "mobile" : req.is_mobile(),
                             "user_list" : x,
                             "user_list_array" : l,
                             "requests" : xr,
-                            "requests_list" : lr}, *args)
+                            "requests_list" : lr,
+                            "admin" : usr.is_admin(),
+                            "username" : name,
+                            "userdata" : usr.data}, *args)
 
 
     def _check_query(self, req, query):
@@ -267,12 +294,21 @@ class AlloServer(RESTServer):
                 query.pagesize=int(req.query["pagesize"])
                 query.page=0
 
+    def get_user_admin(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
+        usr = self.get_user(req, res, isjson)
+        if not usr: return None
+        if not usr.is_admin():
+            if isjson:
+                self.api_resp_forbidden("%s is not admin" % usr.name)
+            else:
+                res.serve403()
+        return usr
+
     def get_user(self, req: HTTPRequest, res: HTTPResponse, isjson=True):
-        log.error("get_user(%s)" % str(tuple(req.cookies.keys())))
         if "SID" in req.cookies:
             cookie=req.cookies["SID"]
             if cookie in self.sessions:
-                log.error("Authentification OK")
+                log.debug("Authentification OK")
                 return self.sessions[cookie]
             log.error("Authentification FAIL '%s' not in (%s)" % (cookie, str(tuple(self.sessions.keys()))))
         else:
@@ -299,6 +335,12 @@ class AlloServer(RESTServer):
     #
     #  ==== HTML Handlers
     #
+    def html_handle_admin(self, req: HTTPRequest, res: HTTPResponse, file : str):
+        currentuser=self.get_user_admin(req, res, False)
+        if not currentuser: return
+        res.no_cache()
+        res.serve_file_gen(config.www(file), self.userlist_object(req, currentuser.name))
+
 
 
     def html_handle_search_film(self, req: HTTPRequest, res: HTTPResponse):
@@ -482,6 +524,118 @@ class AlloServer(RESTServer):
     #
     #  ==== API Handlers
     #
+    def api_user_delete(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/admin/user/delete/#usr) : Supprime l'utilisateur usr
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user_admin(req, res)
+        if not currentuser: return
+        name=req.params["usr"]
+        usr = self.db.exec("select name from sqlite_master where type='table' AND name='%s'" % name)
+        if not len(usr):
+            self.api_resp_not_found(res, "User %s not found" % name)
+        else:
+            user.User.delete_user(self.db, name)
+            self.api_resp_ok(res, name)
+
+
+
+    def api_user_list(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/admin/user/list) : Renvoie la liste des utilisateurs
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        data={
+            name: name,
+            password: password,
+            admin: admin (False)
+        }
+        """
+        currentuser=self.get_user_admin(req, res)
+        if not currentuser: return
+        usrs = self.db.exec("select name, permission from users")
+        out={}
+        for usr in usrs:
+            out[usr[0]]={
+                "name" : usr[0],
+                "admin" : "a" in usr[1]
+            }
+        self.api_resp_ok(res, out)
+
+
+
+    def api_alter_user(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/admin/user/create) : Change le mot de passe
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        data={
+            name: name,
+            password: password,
+            admin: admin (False)
+        }
+        """
+        currentuser=self.get_user_admin(req, res)
+        if not currentuser: return
+        body = req.body_json()
+        name = body["name"]
+        usr = self.db.exec("select name from sqlite_master where type='table' AND name='%s'" % name)
+        if not len(usr):
+            usr=user.User.create_user(self.db, body)
+            self.users[usr.name]=usr
+        else:
+            if "password" in body:
+                self.users[name].set_password(body["password"])
+            if  "admin" in body:
+                self.db.exec("update users set permission='%s' where name='%s" % (
+                    "a" if body["admin"] else "",
+                    name))
+                self.users[name].set_admin(body["admin"])
+            self.db.commit()
+
+        self.api_resp_ok(res)
+
+
+
+    def api_handle_password(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/user/password) : Change le mot de passe
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        body = req.body_json()
+        currentuser.set_password(body["password"])
+
+    def api_key_get(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/user/get) : renvoie la clé api
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        self.api_resp_ok(res, currentuser.api)
+
+    def api_key_renew(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (GET /api/user/renew) : Regénère une clé api
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+
+        self.api_resp_ok(res, currentuser.new_api())
 
     def api_handle_list_all(self, req: HTTPRequest, res: HTTPResponse):
         """
@@ -508,6 +662,51 @@ class AlloServer(RESTServer):
         l=AlloList(name=name)
         self.db.list_create("fanch", name)
         self.api_resp_ok(res)
+
+    def api_handle_set_userdata(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/user/userdata) : Modifie la zone data (dans la table user). A noter
+        que la modification rajoute les éléments (ou les modifie s'ils n'existe pas). Si une valeur
+        n'est pas présente dans la base, elle restera inchangée. La modifie agit uniquement comme un ajout
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        payload = req.body_json()
+        for key in payload:
+            currentuser.data[key]=payload[key]
+        self.api_resp_ok(res)
+
+    def api_handle_permission(self, req: HTTPRequest, res: HTTPResponse):
+        """
+        Méthode API (POST /api/admin/user/#usr/permission) Récupère ou modifie les les permissionss
+        de l'utilisateur #usr. Si aucun parametre de get n'est donné, la requete renvoie les permission.
+        Si le parametre get 'add' est passé il ajoute la valeur de la 'add'
+        Si le parametre get 'remove' est passé il enleve la valeur de la 'remove'
+        :param req: La requête
+        :param res: La réponse
+        :return: Rien
+        """
+        currentuser=self.get_user(req, res)
+        if not currentuser: return
+        if not req.params["usr"] in self.users:
+            self.api_resp_not_found(res,"User %s not found" % req.params["usr"])
+        usr=self.users[req.params["usr"]]
+
+        if not len(req.query):
+            self.api_resp_ok(res, usr.permission)
+        else:
+            if not currentuser.is_admin():
+                return self.api_resp_forbidden("User %s is not admin" % currentuser.name)
+            add=req.query["add"] if req.query["add"] else ""
+            remove=req.query["remove"] if req.query["remove"] else ""
+            for c in add: usr.set_perm(c, True)
+            for c in remove: usr.set_perm(c, False)
+            self.api_resp_ok(res, usr.permission)
+
+
 
     def api_handle_list_get(self, req: HTTPRequest, res: HTTPResponse):
         """

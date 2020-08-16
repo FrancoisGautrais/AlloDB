@@ -57,7 +57,11 @@
                 </div>
             </div>
             <div class="row col  s12 offset-m4 m4">
-                <center><h1>Recherche</h1></center>
+                <center><h1>Recherche
+                    <a  class="">
+                        <i class="material-icons color-2" onclick="save_default_request()">save</i>
+                    </a></h1>
+                </center>
 
                 <div id="root-widget"  class="row">
                     <div id="criteres-content" class="row">
@@ -187,11 +191,19 @@
             </div>
         </div>
     </main>
+
     <script>
         function _run(){
             {{#run}}
                 loadRequest("{{run}}")
             {{/run}}
+            {{^run}}
+                if(DATA.userdata.default_search){
+                    loadRequest(DATA.userdata.default_search);
+
+                }
+            {{/run}}
+
         }
     </script>
     <style>
@@ -229,6 +241,10 @@
             margin-right: 2px ! important;
         }
         #critere-slect-div {
+        }
+
+        center > h1 > a > i {
+            font-size: 32px ! important;
         }
     </style>
 

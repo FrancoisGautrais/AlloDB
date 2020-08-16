@@ -1,0 +1,200 @@
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <link rel="stylesheet" type="text/css" href="/css/materialize.css">
+  <link rel="stylesheet" type="text/css" href="/gen/colors.css">
+  <link rel="stylesheet" type="text/css" href="/css/icons.css">
+  <link rel="stylesheet" type="text/css" href="/css/common.css">
+  <title>Rechercher</title>
+</head>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/materialize.min.js"></script>
+    <script type="text/javascript" src="/js/init.js"></script>
+
+    <div class="card darken-1 modal" id="modify_password">
+        <div class="card-content">
+            <center><span class="card-title" >Modifier le mot de passe</span></center>
+        </div>
+        <div class="card-action row">
+            <#row(input_text("it-password", "Nouvea mot de passe", "text", "Nouveau mot de passe", 0, "password"))>
+            <a class="btn left fond-color-2" onclick="confirm_password_change()">Modifier</a>
+            <a class="btn right fond-color-1" onclick="modalClose('modify_password')">Annuler</a>
+        </div>
+    </div>
+
+    <div class="card darken-1 modal" id="delete_user">
+        <div class="card-content">
+            <center><span class="card-title" >Supprimer l'utilisateur ?</span></center>
+        </div>
+        <div class="card-action row">
+            <div class="row">
+                Êtes vous sur de vouloir supprimer l'utilisateur '<span id="delete-username"></span>'
+            </div>
+            <a class="btn left fond-color-2" onclick="confirm_delete()">Supprimer</a>
+            <a class="btn right fond-color-1" onclick="modalClose('delete_user')">Annuler</a>
+        </div>
+    </div>
+
+
+    <body>
+        <#include("www/gen/header.html")>
+        <main>
+            <div class="container row">
+                <div class="row col  s12 offset-m2 m8">
+                    <center><h1>Administration</h1></center>
+                    <ul class="collapsible">
+                        <li>
+                            <div class="collapsible-header">Utilisateurs</div>
+                            <div class="collapsible-body">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Nom</th>
+                                            <th>Type</th>
+                                            <th>Mot de passe</th>
+                                            <th>Supprimer</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody id="user-body">
+                                    </tbody>
+                                </table>
+                                <div class="row">
+                                    <h2>Créer un nouvel utilisateur</h2>
+                                    <#input_text("it-new-user", "", "text", "Nom", 0, "new-user")>
+                                    <#input_text("it-new-password", "", "text", "Mot de passe", 0, "password")>
+                                    <div class="switch" style="margin-bottom: 20px;">
+                                        <label>
+                                        Admin
+                                            <input type="checkbox" id="sw-admin">
+                                            <span class="lever"></span>
+                                        </label>
+                                    </div>
+                                    <a class="btn left fond-color-2" onclick="create_user()">Ajouter</a>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+        <#include("www/gen/footer.html")>
+    </body>
+    <script>
+        var _curr_user=null;
+        $(document).ready(function(){
+            $('.collapsible').collapsible();
+            $.ajax({
+                type: 'get',
+                url: api("/admin/user/list"),
+                success: function(data){
+                    add_users(data.data);
+                },
+                error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+            });
+         });
+
+        function add_users(data){
+            for (const key in data) {
+                add_user(data[key])
+            }
+        }
+
+         function add_user(data){
+            var tr = $('<tr data-name="'+data.name+'"></tr>');
+            tr.append($("<td>"+data.name+"</td>"));
+            if(DATA.username==data.name) tr.append('<td></td>')
+            else
+                tr.append($("<td>"+'<div class="switch"><label><input type="checkbox" id="admin-'+data.name+'" '+
+                        (data.admin?"checked":"")+' onchange="adminchange(\''+data.name+'\')"><span class="lever"></span></label></div>'+"</td>"));
+
+
+            var btn1 = '<a onclick="modify_password(\''+data.name+'\')" class="btn fond-color-2 color-4">Modifier</a>'
+            var btn2 = '<a onclick="delete_user(\''+data.name+'\')" class="btn fond-color-1 color-4">Supprimer</a>'
+            tr.append('<td>'+btn1+'</td>')
+            if(DATA.username==data.name) tr.append('<td></td>')
+            else tr.append('<td>'+btn2+'</td>')
+            $("#user-body").append(tr)
+         }
+
+         function delete_user(name){
+            _curr_user=name;
+            $("#delete-username").html(name)
+            modal("delete_user")
+         }
+
+         function confirm_delete(){
+            var name = _curr_user;
+            loading("Merci de patienter...")
+            $.ajax({
+                type: 'get',
+                url: api("/admin/user/delete/"+name),
+                success: function(data){
+                    modalClose("loading")
+                    modalClose("delete_user")
+                    $("tr[data-name="+data.data+"]").remove()
+                    toast("Utilisateur '"+data.data+"' supprimé")
+
+                },
+                error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+            });
+         }
+
+         function modify_password(name){
+            _curr_user=name;
+            modal("modify_password");
+         }
+
+         function confirm_password_change(){
+            var name = _curr_user;
+            alter_user({
+                name: name,
+                password: $("#it-password").val()
+            })
+            modalClose("modify_password")
+            $("#it-password").val("")
+
+         }
+
+
+         function adminchange(name){
+            alter_user({
+                name: name,
+                admin: $("#admin-"+name).is(":checked")
+            })
+            modalClose("modify_password")
+         }
+
+         function create_user(){
+            var val={
+                name: $("#it-new-user").val(),
+                admin: $("#sw-admin").is(":checked"),
+                password: $("#it-new-password").val(),
+            }
+            alter_user(val)
+            add_user(val)
+
+            $("#it-new-user").val("");
+            $("#it-new-password").val("");
+            $("#sw-admin").prop( "checked", false);
+         }
+
+         function alter_user(data, f=null) {
+            loading("Merci de patienter")
+            $.ajax({
+                type: 'post',
+                url: api("admin/user/create"),
+                contentType: "application/json",
+                data: JSON.stringify(data),
+                success: function(jsonData){
+                    modalClose("loading");
+                    toast("Utilisateur '"+data.name+"' modifié")
+                },
+                error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
+            });
+         }
+    </script>
+</html>
+

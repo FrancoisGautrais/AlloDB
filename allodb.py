@@ -267,16 +267,16 @@ class DB(SQConnector):
         return allofunction.call(self, name, args)
 
     def row_from_id(self, user, id):
-        return self.find(user, "id=%d" % id)
+        return self.find_nouser(user, "id=%d" % id)
 
     def row_from_actor(self, user, act):
-        return self.find(user, "'%s' in actor" % act)
+        return self.find_nouser(user, "'%s' in actor" % act)
 
     def row_from_director(self, dir):
-        return self.find(user, "'%s' in director" % dir)
+        return self.find_nouser(user, "'%s' in director" % dir)
 
     def row_from_nationality(self, pays):
-        return self.find(user, "'%s' in nationality" % pays)
+        return self.find_nouser(user, "'%s' in nationality" % pays)
 
 
 
@@ -394,7 +394,7 @@ class DB(SQConnector):
         self.exec("delete from %s_requests where name='%s'" % (user, name))
 
     def get_film_by_id(self, user, id):
-        return self.find(user, "id=%s" % id)
+        return self.find_nouser(user, "id=%s" % id)
 
     def set(self, user, affs, id):
         out="update %s set " % user
