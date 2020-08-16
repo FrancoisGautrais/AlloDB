@@ -236,7 +236,7 @@ function on_head_search(){
     if ( id ) url("/film/"+id)
     else{
         $('body').append($('<form/>')
-              .attr({'action': "results", 'method': 'post', 'id': 'replacer'})
+              .attr({'action': "/results", 'method': 'post', 'id': 'replacer'})
               .append($('<input/>')
                 .attr({'type': 'hidden', 'name': 'json', 'value': JSON.stringify({ match: val})})
               )
