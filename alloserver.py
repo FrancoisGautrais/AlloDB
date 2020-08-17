@@ -318,7 +318,10 @@ class AlloServer(RESTServer):
             res.content_type("application/json")
             res.serveJson({ "message" : "Erreur, session invalide", "code": 401}, 401)
         else:
-            res.serve302("/login")
+            query = ""
+            if req.path!="/login":
+                query="?redirect=%s" % req.path
+            res.serve302("/login%s" % query)
         return None
 
     def handle_nop(self, req: HTTPRequest, res: HTTPResponse):
@@ -390,18 +393,30 @@ class AlloServer(RESTServer):
 
     def html_handle_post_login(self, req: HTTPRequest, res: HTTPResponse):
         js=req.body_json()
-        user=js["login"]
-        password=js["password"]
-        res.content_type("application/json")
-        res.no_cache()
-        if user in self.users:
-            if utils.check_password(password, self.users[user].password):
-                cookie = self.set_new_session(user)
-                res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
-                res.end({})
-                return
+        if "login" in js and "password" in js:
+            user=js["login"]
+            password=js["password"]
+            res.content_type("application/json")
+            res.no_cache()
+            if user in self.users:
+                if utils.check_password(password, self.users[user].password):
+                    cookie = self.set_new_session(user)
+                    res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
+                    res.end({})
+                    return
 
-        res.serve401(data={"message" : "Login ou mot de passe invalide"})
+            res.serve401(data={"message" : "Login ou mot de passe invalide"})
+        elif "api" in js:
+            usr=None
+            for u in self.users:
+                if js["api"]==self.users[u].api:
+                    cookie = self.set_new_session(u)
+                    res.header("Set-Cookie", "SID=%s; Path=/" % cookie)
+                    res.end({})
+                    return
+            res.serve401(data={"message" : "API invalide"})
+        else:
+            res.serve401(data={"message": "Aucune api ou login/mot de passe donné"})
 
     def html_handle_actor(self, req: HTTPRequest, res: HTTPResponse):
         currentuser=self.get_user(req, res, False)
@@ -485,7 +500,6 @@ class AlloServer(RESTServer):
             x=tmp.result
             x.pagesize = pagesize
             currentuser.request=tmp
-
         else:
             if "id" in req.params and "page" in req.params:
                 x=currentuser.request.result
@@ -510,7 +524,7 @@ class AlloServer(RESTServer):
         currentuser=self.get_user(req, res, False)
         if not currentuser: return
         del self.sessions[req.cookies["SID"]]
-        res.serve302("/login")
+        res.serve302("/login?disconnect=true")
 
 
     def html_handle_import(self, req: HTTPRequest, res: HTTPResponse):

@@ -33,6 +33,12 @@
                         <#col(input_text("it-password-second", "", "password", "Retappez le mot de passe", 0, "password-second"), "col s12 m6")>
                         <a onclick="change_password()" class="btn fond-color-1 color-4 col">Modifier le mot de passe</a>
                     </div>
+                    <h2>Auto login</h2>
+                    <div class="row s12">
+                        <div>Status: <span id="autologin-status"></span></div>
+                        <a onclick="autologin_on()" class="btn fond-color-2 color-4 col " id="btn-autologin-on">Activer</a>
+                        <a onclick="autologin_off()" class="btn fond-color-1 color-4 col " id="btn-autologin-off">Désactiver</a>
+                    </div>
                 </div>
             </div>
         </main>
@@ -49,6 +55,7 @@
                 },
                 error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
             });
+            update_autologin();
         })
 
         function change_password(){
@@ -87,6 +94,38 @@
                     },
                     error : function(_a, _b, _c) {modalClose("loading"); error("Erreur", _a.responseText)}
              });
+        }
+
+        function autologin_on(){
+            var api=$("#it-apikey").val();
+            if(api.length>0){
+                set_auto_login(api)
+                if(get_auto_login()==api){
+                    toast("Autologin activé !")
+                } else {
+                    error("Impossible d'activer l'autologin. Votre navigateur autorise le stockage local ?");
+                }
+            }
+            else
+            {
+                error("Erreur", "Vous devez d'abord générer une clé API !");
+            }
+            update_autologin();
+        }
+
+        function autologin_off(){
+            unset_auto_login()
+            update_autologin();
+        }
+
+        function update_autologin(){
+            var status = $("#autologin-status")
+            status.empty()
+            if(get_auto_login()){
+                status.append('<a class="color-2">Activé</a>')
+            }else{
+                status.append('<a class="color-1">Désactivé</a>')
+            }
         }
     </script>
     <style>
