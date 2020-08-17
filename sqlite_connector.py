@@ -143,6 +143,7 @@ class SQConnector:
             log.e("Error sqlite_connector.find: %s " % str(err))
             return rs
         rs.set_results(cur)
+        if len(rs.data)<=0: return self.find_nouser(user, sql, order, pagesize, page)
         return rs
 
     def find_nouser(self, user, sql, order=None, pagesize=50, page=0):

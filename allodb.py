@@ -394,7 +394,7 @@ class DB(SQConnector):
         self.exec("delete from %s_requests where name='%s'" % (user, name))
 
     def get_film_by_id(self, user, id):
-        return self.find_nouser(user, "id=%s" % id)
+        return self.find(user, "id=%s" % id)
 
     def set(self, user, affs, id):
         out="update %s set " % user
