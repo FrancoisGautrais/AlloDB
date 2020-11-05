@@ -23,9 +23,22 @@ class Log:
     _INSTANCE=None
 
     def __init__(self, level, fd):
-        self.fd=fd
+
+        if isinstance(fd, str):
+            self.fd=open(fd, "w")
+            self.need_close_fd = True
+        else:
+            self.fd=fd
+            self.need_close_fd = False
+
+        print(self.fd)
         self.lvl=level
         self.lock=threading.Lock()
+
+    @staticmethod
+    def close():
+        if Log._INSTANCE.need_close_fd:
+            Log._INSTANCE.fd.close()
 
     def _log(self, lvl, s):
         if lvl>=self.lvl:
@@ -34,6 +47,7 @@ class Log:
             if self.fd!=sys.stdout:
                 print(_time_str()+"|"+Log.LEVEL_STR[lvl]+"| "+s+"\n")
             self.lock.release()
+            self.fd.flush()
 
     def log(self, level, *args):
        arg=[ ]
@@ -69,6 +83,8 @@ if not Log._INSTANCE:
     Log.init()
 
 def log(lvl, *args): Log._INSTANCE.log(lvl, *args)
+
+def closelog(): Log._INSTANCE.close()
 
 def debug(*args): log(Log.DEBUG, *args)
 def d(*args): log(Log.DEBUG, *args)

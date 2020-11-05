@@ -189,6 +189,7 @@ class AlloServer(RESTServer):
 
 
         self.route("GET", "/stop", self.handle_stop)
+        self.route("GET", "/update", self.handle_update)
         self.route("GET", "/nop", self.handle_nop)
 
 
@@ -331,6 +332,12 @@ class AlloServer(RESTServer):
     def handle_stop(self, req: HTTPRequest, res: HTTPResponse):
         self.stop()
         requests.get("http://localhost:%d/nop" % self._port)
+
+    def handle_stop(self, req: HTTPRequest, res: HTTPResponse):
+        currentuser=self.get_user_admin(req, res, False)
+        if not currentuser: return
+        res.no_cache()
+
 
 
 

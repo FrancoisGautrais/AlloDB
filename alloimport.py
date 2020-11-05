@@ -125,6 +125,7 @@ def extract(htmlcont, columns):
         x = filter_id(line)
         if x: js["id"] = x
     x=obj_to_arr(js, columns)
+    print(x)
     return x
 
 

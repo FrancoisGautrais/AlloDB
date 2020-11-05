@@ -1,5 +1,6 @@
 import json
 import math
+import os
 import sqlite3
 import threading
 import time, requests, alloimport
@@ -46,7 +47,8 @@ class AlloUpdater(SQConnector):
         ("aggregateRating/ratingCount", int, 0, "nnote"),
         ("aggregateRating/reviewCount", int, 0, "nreview")
     ]
-    URl_DL="http://localhost/allocine/%d.html"
+    #URl_DL="http://localhost/allocine/%d.html"
+    URl_DL="https://www.allocine.fr/film/fichefilm_gen_cfilm=%d.html"
     UPDATE_SCHEM="""create table update_list(
                 filmid int,
                 timestamp int,
@@ -81,8 +83,8 @@ class AlloUpdater(SQConnector):
         if not a: a = 1
         if not b: b = 1
         if t:
-            t /= 3600 * 24 * 30  # par mois
-            pc = (100 * (b) / a) ** (1 / t)  # augmentation de note (en pourcentage/mois)
+            t /= 3600 * 24 * 30.0  # par mois
+            pc = (100 * (b) / a) ** (1 / max(0.01,t))  # augmentation de note (en pourcentage/mois)
         else:
             pc=1
 
@@ -96,6 +98,7 @@ class AlloUpdater(SQConnector):
         self.init()
         self.queue=[]
         self.maxtryed=self.one("select max(id) from films")
+        log.i("Max try = %d" % self.maxtryed)
 
 
 
@@ -128,6 +131,7 @@ class AlloUpdater(SQConnector):
     def update(self, filmid):
         js=None
         needupdate=True
+        action=""
         try:
             js=self.get_film(filmid)
         except:
@@ -135,26 +139,30 @@ class AlloUpdater(SQConnector):
 
 
         try:
-
-            if not self.one("select count(*) from update_list where filmid=%d" % filmid):
+            action = "select count(*) from update_list where filmid=%d" % filmid
+            if not self.one(action):
                 prio=AlloUpdater.calc_prio(0,js[13],js, 0)
-                self.exec("insert into update_list (filmid, timestamp, priority, needupdate) values (%d, %d, %d, %d)" %(
+                action = "insert into update_list (filmid, timestamp, priority, needupdate) values (%d, %d, %d, %d)" %(
                     filmid, int(time.time()), prio, int(needupdate)
-                ))
+                )
+                self.exec(action)
                 self.insert_film_base(js)
             else:
-                old=self.one("select nnote from films where id=%d" % filmid)
-                t=time.time()-self.one("select timestamp from update_list where id=%d" % filmid)
+                action = "select nnote from films where id=%d" % filmid
+                old=self.one(action)
+                action = "select timestamp from update_list where filmid=%d" % filmid
+                t=time.time()-self.one(action)
                 prio=AlloUpdater.calc_prio(old, js[13], js, t)
-                self.exec("update update_list set timestamp=%d, priority=%d, needupdate=%d where filmid=%d" % (
+                action="update update_list set timestamp=%d, priority=%d, needupdate=%d where filmid=%d" % (
                     int(time.time()), prio, int(needupdate), filmid
-                ))
+                )
+                self.exec(action)
                 self.update_film_base(js)
             return True
         except sqlite3.IntegrityError as err:
             return False
         except Exception as err:
-            print("Errror : %s pour %s " % (err, str(js[0])))
+            log.c("%s (update) (%s) pour %s \n\tRequest = %s " % ( err.__class__.__name__, err, str(js[0]), action))
             self.commit()
             exit(-1)
 
@@ -174,10 +182,26 @@ class AlloUpdater(SQConnector):
 
     def get_film(self, n):
         url = AlloUpdater.URl_DL % n
-        ret=requests.get(url)
+        print(url)
+        ret=requests.get(url, headers={
+            "Host": "www.allocine.fr",
+            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:81.0) Gecko/20100101 Firefox/81.0",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language": "fr,fr-FR;q=0.8,en-US;q=0.5,en;q=0.3",
+            "Accept-Encoding": "gzip, deflate, br",
+            "DNT": "1",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Pragma": "no-cache",
+            "Cache-Control": "no-cache"
+        })
+        with open("/home/fanch/index.html", "wb") as f:
+            f.write(ret.content)
+
         if ret.status_code==200:
             js = alloimport.extract(ret.content.decode("utf-8"), AlloUpdater.COLUMNS)
             js[0]=n
+            print(js)
             return js
         raise Exception("%s" % url)
 
@@ -239,17 +263,20 @@ class AlloUpdater(SQConnector):
         self.exec("delete from to_update where filmid=%d " % fid)
         #log.debug("[tid:%d] %d done" % (tid, fid))
         if  n%50==0:
+            log.d("COMMIT !")
             self.commit()
 
 
 
     def schedule(self):
         while True:
-            if self.one("select count(*) from to_update")==0:
+            if self.one("select count(*) from update_list")==0:
                 self._schedule_update()
                 self.commit()
-                self.var_set("total_to_update", self.one("select count(filmid) from to_update"))
-            ret = self.exec("select filmid from to_update order by priority desc")
+                self.var_set("total_to_update", self.one("select count(filmid) from update_list"))
+                log.d("To update : %d "% (self.var_get("total_to_update")))
+            ret = self.exec("select filmid from update_list order by priority desc")
+            log.d(ret)
             for x in ret:
                 self.queue.append(x[0])
 
@@ -280,7 +307,35 @@ class AlloUpdater(SQConnector):
                 time.sleep(24*3600)
 
 
+def do_update(lvl=Log.DEBUG, fd="updater.log"):
+    Log.init(lvl, fd)
+    try:
+        with open("update.lock") as f:
+            raise FileExistsError()
+    except FileExistsError as e:
+        log.c("Impossible de faire la mise à jour une est déja en cours...")
+        #return False
+    except FileNotFoundError as e:
+        pass
+    log.i("Création du fichier lock")
+    with open("update.lock", "w") as f:
+        pass
+    x = AlloUpdater(nthread=0)
+    x.schedule()
+    #print(x.get_film(251315))
+    log.e("Fermture du lock")
+    os.remove("update.lock")
+    Log.close()
+    return True
 
-Log.init()
-x=AlloUpdater(nthread=0)
-x.schedule()
+def do_update_fork(lvl=Log.DEBUG, fd="updater.log"):
+    pid = os.fork()
+    if not pid:
+        do_update(lvl, fd)
+        exit(0)
+
+
+if __name__ == "__main__":
+    do_update()
+    #while True:
+    #    time.sleep(1)
