@@ -189,7 +189,7 @@ class AlloServer(RESTServer):
 
 
         self.route("GET", "/stop", self.handle_stop)
-        self.route("GET", "/update", self.handle_update)
+        #self.route("GET", "/update", self.handle_update)
         self.route("GET", "/nop", self.handle_nop)
 
 
