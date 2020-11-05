@@ -104,7 +104,7 @@ class SQConnector:
     nreview int)
 """
     def __init__(self, file):
-        self.conn=sqlite3.connect(file)
+        self.conn=sqlite3.connect(file, check_same_thread=False)
         self.conn.execute("PRAGMA case_sensitive_like = false;")
 
     def exec(self, sql):
